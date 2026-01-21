@@ -44,7 +44,12 @@ export default function FeedbackManagementPage() {
       const data = await apiClient.getFeedbackList({
         page,
         page_size: pageSize,
-        ...filters,
+        ...(filters.rating ? { rating: Number(filters.rating) } : {}),
+        accuracy: filters.accuracy || undefined,
+        make: filters.make || undefined,
+        search: filters.search || undefined,
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
       })
       setFeedback(data.items || [])
       setTotal(data.total || 0)
