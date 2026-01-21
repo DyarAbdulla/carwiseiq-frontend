@@ -21,6 +21,12 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Explicitly handle root path - redirect to default locale
+  // This ensures Cloudflare Pages handles the root route correctly
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
+  }
+
   // Redirect removed /stats and /docs to home (/:locale)
   const match = pathname.match(/^\/(en|ku|ar)\/(stats|docs)\/?$/);
   if (match) {
@@ -36,7 +42,7 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  // Let next-intl handle "/" -> redirect to detected or preferred locale (Accept-Language / NEXT_LOCALE)
+  // Let next-intl handle locale routing for all other paths
   return intlMiddleware(request);
 }
 
