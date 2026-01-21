@@ -11,7 +11,7 @@
     "dev": "npm run clean:win && npm run kill-port && npx next dev -p 3002 -H 0.0.0.0",
     "kill-port": "powershell -Command \"$process = Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($process) { Stop-Process -Id $process -Force; Write-Host 'Killed process on port 3002' } else { Write-Host 'Port 3002 is free' }\"",
     "dev:clean": "npm run clean:win && npx next dev -H 0.0.0.0",
-    "build": "npm run clean:win && npx next build",
+    "build": "next build",
     "start": "npx next start",
     "lint": "npx next lint"
   },
