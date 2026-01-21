@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,11 @@ export default function ReportsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [loading, setLoading] = useState(false)
 
-  const loadDailyReport = useCallback(async () => {
+  useEffect(() => {
+    loadDailyReport()
+  }, [selectedDate])
+
+  const loadDailyReport = async () => {
     setLoading(true)
     try {
       const data = await apiClient.getDailyFeedbackReport(selectedDate)
@@ -35,11 +39,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedDate])
-
-  useEffect(() => {
-    loadDailyReport()
-  }, [loadDailyReport])
+  }
 
   const handleExport = (format: 'csv' | 'excel') => {
     // TODO: Implement export

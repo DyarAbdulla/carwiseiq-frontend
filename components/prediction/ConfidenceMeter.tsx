@@ -49,7 +49,7 @@ export function ConfidenceMeter({
   const config = levelConfig[confidenceLevel]
 
   return (
-    <Card className="border-[#2a2d3a] bg-[#1a1d29] relative overflow-visible">
+    <Card className="border-[#2a2d3a] bg-[#1a1d29] relative overflow-hidden">
       {/* Pulsing glow effect */}
       <motion.div
         className="absolute inset-0 opacity-0"

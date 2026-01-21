@@ -3,7 +3,7 @@
 import { useLocale } from 'next-intl'
 import { useEffect } from 'react'
 
-/** Arabic and Kurdish use RTL. English uses LTR. */
+/** ar (Arabic) and ku (Kurdish Sorani) are RTL. en and ku-Latn (Kurdish Latin, if added) stay LTR. */
 const RTL_LOCALES = ['ar', 'ku']
 
 /**

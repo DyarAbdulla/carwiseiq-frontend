@@ -1,5 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -9,11 +10,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CookieConsent } from '@/components/common/CookieConsent';
 import { SkipToContent } from '@/components/common/SkipToContent';
 import { SetDirection } from '@/components/common/SetDirection';
-import { ScrollToTop } from '@/components/ScrollToTop';
-import { PageTransition } from '@/components/PageTransition';
-import { PredictLoadingProvider } from '@/components/PredictLoadingProvider';
-import { CsrfProvider } from '@/context/CsrfContext';
-import { RecoveryHashRedirect } from '@/components/auth/RecoveryHashRedirect';
 import React from 'react';
 
 export function generateStaticParams() {
@@ -36,6 +32,7 @@ export default async function LocaleLayout({
 
     // Validate locale
     if (!locale || !locales.includes(locale as any)) {
+      console.warn(`Invalid locale: ${locale}, falling back to 'en'`);
       locale = 'en';
     }
 
@@ -63,36 +60,24 @@ export default async function LocaleLayout({
 
   return (
     <ErrorBoundary>
-      <NextIntlClientProvider key={locale} locale={locale} messages={messages || {}}>
+      <NextIntlClientProvider locale={locale} messages={messages || {}}>
         <SetDirection />
-        <CsrfProvider>
         <ToastProvider>
-          <RecoveryHashRedirect />
-          <PredictLoadingProvider>
-            <ScrollToTop />
-            <SkipToContent />
-            <APIStatusBanner />
-            <div className="flex flex-col min-h-screen">
-              <ErrorBoundary>
-                <Header />
-              </ErrorBoundary>
-              <main id="main-content" className="relative flex-1 min-h-[calc(100vh-8rem)]" role="main">
-                <div className="relative z-10 w-full max-w-[1440px] mx-auto px-5 sm:px-6 lg:px-8 pt-20 pb-24 sm:pb-28 overflow-visible">
-                  <ErrorBoundary homeHref={`/${locale}`}>
-                    <PageTransition>
-                      {children}
-                    </PageTransition>
-                  </ErrorBoundary>
-                </div>
-              </main>
-              <ErrorBoundary>
-                <Footer />
-              </ErrorBoundary>
-            </div>
-            <CookieConsent />
-          </PredictLoadingProvider>
+          <SkipToContent />
+          <APIStatusBanner />
+          <ErrorBoundary>
+            <Header />
+          </ErrorBoundary>
+          <main id="main-content" className="min-h-[calc(100vh-8rem)]" role="main">
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </main>
+          <ErrorBoundary>
+            <Footer />
+          </ErrorBoundary>
+          <CookieConsent />
         </ToastProvider>
-        </CsrfProvider>
       </NextIntlClientProvider>
     </ErrorBoundary>
   );

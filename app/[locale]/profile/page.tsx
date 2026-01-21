@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -53,7 +53,16 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const loadProfile = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadProfile()
+  }, [user, authLoading])
+
+  const loadProfile = async () => {
     if (!user) {
       router.push(`/${locale}/login`)
       return
@@ -82,16 +91,7 @@ export default function ProfilePage() {
     } finally {
       setLoading(false)
     }
-  }, [user, locale, router, toast])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!user) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadProfile()
-  }, [user, authLoading, loadProfile, router, locale])
+  }
 
   const handleSaveProfile = async () => {
     setSavingProfile(true)

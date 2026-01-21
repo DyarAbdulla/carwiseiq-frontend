@@ -128,6 +128,9 @@ export async function getCarPreviewImageAsync(options: CarPreviewOptions): Promi
 
   // Always return a valid path - never return empty string
   if (!make || make.trim() === '') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CarPreview] No make provided, using default')
+    }
     return '/images/cars/default-car.jpg'
   }
 
@@ -160,6 +163,18 @@ export async function getCarPreviewImageAsync(options: CarPreviewOptions): Promi
 
     // Cache the result
     imagePathCache.set(cacheKey, imagePath)
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CarPreview] Image lookup:', {
+        make,
+        model,
+        year,
+        trim,
+        match_type: result.match_type,
+        imagePath
+      })
+    }
+
     return imagePath
   } catch (error) {
     console.error('[CarPreview] Error fetching image:', error)
@@ -178,6 +193,9 @@ export function getCarPreviewImage(options: CarPreviewOptions): string {
 
   // Always return a valid path - never return empty string
   if (!make || make.trim() === '') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CarPreview] No make provided, using default')
+    }
     return '/images/cars/default-car.jpg'
   }
 
@@ -244,6 +262,19 @@ export function getCarPreviewImage(options: CarPreviewOptions): string {
 
   // Cache the result
   imagePathCache.set(cacheKey, finalPath)
+
+  // Debug logging (dev only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[CarPreview] Image lookup (fallback):', {
+      make: normalizedMake,
+      model: normalizedModel,
+      year,
+      trim: normalizedTrim,
+      foundKey,
+      finalPath,
+    })
+  }
+
   return finalPath
 }
 

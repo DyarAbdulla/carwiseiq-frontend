@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Heart } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useAuth } from '@/hooks/use-auth'
@@ -32,15 +32,6 @@ export function FavoriteButton({
   const [isToggling, setIsToggling] = useState(false)
   const [animate, setAnimate] = useState(false)
 
-  const checkFavorite = useCallback(async () => {
-    try {
-      const data = await apiClient.checkFavorite(listingId)
-      setIsFavorite(data.is_favorite)
-    } catch (error) {
-      // Ignore errors
-    }
-  }, [listingId])
-
   useEffect(() => {
     if (isAuthenticated && listingId) {
       checkFavorite()
@@ -49,7 +40,16 @@ export function FavoriteButton({
       const guestFavorites = JSON.parse(localStorage.getItem('guest_favorites') || '[]')
       setIsFavorite(guestFavorites.includes(listingId))
     }
-  }, [listingId, isAuthenticated, checkFavorite])
+  }, [listingId, isAuthenticated])
+
+  const checkFavorite = async () => {
+    try {
+      const data = await apiClient.checkFavorite(listingId)
+      setIsFavorite(data.is_favorite)
+    } catch (error) {
+      // Ignore errors
+    }
+  }
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault()

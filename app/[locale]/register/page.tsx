@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
+import { apiClient } from '@/lib/api'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -82,13 +83,13 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      await authRegister(
+      // Use enhanced register API
+      const response = await apiClient.register(
         data.email,
         data.password,
         data.confirmPassword,
         data.full_name,
-        data.terms_accepted,
-        locale
+        data.terms_accepted
       )
 
       toast({
@@ -96,6 +97,7 @@ export default function RegisterPage() {
         description: 'Account created! Please check your email to verify your account.',
       })
 
+      // Redirect to email verification page
       router.push(`/${locale}/verify-email?email=${encodeURIComponent(data.email)}`)
     } catch (error: any) {
       let errorMessage = error.message || t('registerError') || 'Registration failed'
@@ -136,15 +138,15 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="full_name" className="text-white">
-                {t('fullNameOptional')}
+                Full Name (Optional)
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8] rtl:left-auto rtl:right-3" />
+                <User className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8]" />
                 <Input
                   id="full_name"
                   type="text"
-                  placeholder={t('fullNamePlaceholder')}
-                  className={`ps-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
+                  placeholder="Enter your full name"
+                  className={`pl-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
                     errors.full_name ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
                   }`}
                   {...register('full_name')}
@@ -161,12 +163,12 @@ export default function RegisterPage() {
                 {getTranslation('email', 'Email')}
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8] rtl:left-auto rtl:right-3" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8]" />
                 <Input
                   id="email"
                   type="email"
                   placeholder={getTranslation('emailPlaceholder', 'Enter your email')}
-                  className={`ps-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
+                  className={`pl-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
                     errors.email ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
                   }`}
                   {...register('email')}
@@ -183,12 +185,12 @@ export default function RegisterPage() {
                 {getTranslation('password', 'Password')}
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8] rtl:left-auto rtl:right-3" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8]" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder={getTranslation('passwordPlaceholder', 'Enter your password')}
-                  className={`ps-10 pe-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
+                  className={`pl-10 pr-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
                     errors.password ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
                   }`}
                   {...register('password')}
@@ -197,7 +199,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-[#94a3b8] hover:text-white transition-colors rtl:right-auto rtl:left-3"
+                  className="absolute right-3 top-3 text-[#94a3b8] hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -220,12 +222,12 @@ export default function RegisterPage() {
                 {getTranslation('confirmPassword', 'Confirm Password')}
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8] rtl:left-auto rtl:right-3" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#94a3b8]" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder={getTranslation('confirmPasswordPlaceholder', 'Confirm your password')}
-                  className={`ps-10 pe-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
+                  className={`pl-10 pr-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
                     errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
                   }`}
                   {...register('confirmPassword')}
@@ -234,7 +236,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-[#94a3b8] hover:text-white transition-colors rtl:right-auto rtl:left-3"
+                  className="absolute right-3 top-3 text-[#94a3b8] hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -249,7 +251,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="flex items-start gap-2">
+            <div className="flex items-start space-x-2">
               <Checkbox
                 id="terms"
                 checked={watch('terms_accepted')}
@@ -259,23 +261,23 @@ export default function RegisterPage() {
               />
               <Label
                 htmlFor="terms"
-                className="text-sm text-[#94a3b8] cursor-pointer leading-relaxed min-w-0 break-words"
+                className="text-sm text-[#94a3b8] cursor-pointer leading-relaxed"
               >
-                {t('termsAcceptPrefix')}
+                I accept the{' '}
                 <Link
                   href={`/${locale}/terms`}
                   className="text-[#5B7FFF] hover:underline"
                   target="_blank"
                 >
-                  {t('termsOfService')}
+                  Terms of Service
                 </Link>
-                {t('termsAnd')}
+                {' '}and{' '}
                 <Link
                   href={`/${locale}/privacy`}
                   className="text-[#5B7FFF] hover:underline"
                   target="_blank"
                 >
-                  {t('privacyPolicy')}
+                  Privacy Policy
                 </Link>
               </Label>
             </div>
@@ -293,11 +295,11 @@ export default function RegisterPage() {
             </LoadingButton>
           </form>
 
-          <div className="mt-4 text-center text-sm text-[#94a3b8] break-words">
+          <div className="mt-4 text-center text-sm text-[#94a3b8]">
             {getTranslation('hasAccount', 'Already have an account?')}{' '}
             <Link
               href={`/${locale}/login`}
-              className="text-[#5B7FFF] hover:underline font-medium break-words"
+              className="text-[#5B7FFF] hover:underline font-medium"
             >
               {getTranslation('login', 'Login')}
             </Link>

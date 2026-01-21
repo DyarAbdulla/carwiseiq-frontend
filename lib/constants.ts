@@ -70,12 +70,6 @@ export const CAR_COLORS = [
   'Other'
 ]
 
-/** Vehicle types (not in dataset; used for UX; model does not use type_encoded) */
-export const VEHICLE_TYPES = [
-  'Sedan', 'SUV', 'Truck', 'Coupe', 'Hatchback', 'Convertible',
-  'Van', 'Minivan', 'Wagon', 'Crossover', 'Pickup',
-]
-
 export const SAMPLE_CAR = {
   year: 2020,
   mileage: 50000,
@@ -83,9 +77,9 @@ export const SAMPLE_CAR = {
   cylinders: 4,
   make: 'Toyota',
   model: 'Camry',
-  trim: 'LE', // From dataset
+  trim: 'LE', // Default trim for sample car (exists in dataset)
   condition: 'Good',
   fuel_type: 'Gasoline',
-  location: 'Baghdad', // From dataset
+  location: 'Baghdad', // Updated to match dataset
 }
 

@@ -48,20 +48,15 @@ export default function AdminLoginPage() {
     if (adminToken) {
       router.push(`/${locale}/admin/dashboard`)
     }
-  }, [router, locale])
+  }, [router])
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      if (typeof window !== 'undefined') console.log('[LoginPage] Attempting login...')
       const response = await apiClient.adminLogin(data.email, data.password)
-
+      
+      // Store admin info
       localStorage.setItem('admin_token', response.access_token)
       localStorage.setItem('admin_info', JSON.stringify(response.admin))
-
-      if (typeof window !== 'undefined') {
-        console.log('[LoginPage] Login successful')
-        console.log('[LoginPage] Token stored:', localStorage.getItem('admin_token') ? 'YES' : 'NO')
-      }
 
       toast({
         title: 'Login successful',
@@ -71,7 +66,6 @@ export default function AdminLoginPage() {
       const locale = window.location.pathname.split('/')[1] || 'en'
       router.push(`/${locale}/admin/dashboard`)
     } catch (error: any) {
-      if (typeof window !== 'undefined') console.error('[LoginPage] Login failed:', error)
       toast({
         title: 'Login failed',
         description: error.message || 'Invalid email or password',
@@ -107,7 +101,7 @@ export default function AdminLoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@carprice.com"
+                  placeholder="admin@carprediction.com"
                   className="pl-10"
                   {...register('email')}
                 />
@@ -156,7 +150,7 @@ export default function AdminLoginPage() {
             <div className="text-center text-sm text-gray-500 mt-4">
               <p>Default credentials:</p>
               <p className="font-mono text-xs mt-1">
-                admin@carprice.com / admin123
+                admin@carprediction.com / Admin@123
               </p>
             </div>
           </form>

@@ -10,7 +10,6 @@ import type { BatchPredictionResult } from '@/lib/types'
 interface ExtendedResult extends BatchPredictionResult {
   confidence_percent?: number
   deal_rating?: 'Good' | 'Fair' | 'Poor'
-  price_range?: { min?: number; max?: number }
 }
 
 interface ExpandableRowProps {
@@ -144,13 +143,13 @@ export function ExpandableRow({ result, index, isFavorite, onToggleFavorite }: E
                         <div className="flex justify-between">
                           <span className="text-[#94a3b8]">Price Range Min:</span>
                           <span className="text-white font-medium">
-                            {formatCurrency(result.price_range.min ?? 0)}
+                            {formatCurrency(result.price_range.min)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-[#94a3b8]">Price Range Max:</span>
                           <span className="text-white font-medium">
-                            {formatCurrency(result.price_range.max ?? 0)}
+                            {formatCurrency(result.price_range.max)}
                           </span>
                         </div>
                       </>

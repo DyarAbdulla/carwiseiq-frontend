@@ -1,6 +1,5 @@
 import axios, { AxiosError } from 'axios'
 import { apiCache } from './api-cache'
-import { csrfStore } from './csrf-store'
 import type {
   CarFeatures,
   PredictionRequest,
@@ -12,10 +11,9 @@ import type {
   SellCarResponse,
 } from './types'
 
-// Use NEXT_PUBLIC_API_BASE_URL in .env.production or .env.local
-const isProduction = process.env.NODE_ENV === 'production'
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || (isProduction ? 'https://api.carwiseiq.com' : 'http://localhost:8000')
-const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || (isProduction ? 'https://api.carwiseiq.com' : 'http://localhost:8000')).replace(':3001', ':8000')
+// Use NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 in .env.local (or .env)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(':3001', ':8000')
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -65,18 +63,6 @@ api.interceptors.request.use((config) => {
   if (config.data && typeof FormData !== 'undefined' && config.data instanceof FormData) {
     const h = config.headers as Record<string, unknown>
     if (h && 'Content-Type' in h) delete h['Content-Type']
-  }
-  return config
-})
-
-// Request interceptor: add X-CSRF-Token for state-changing methods (POST/PUT/PATCH/DELETE)
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const m = (config.method || 'get').toLowerCase()
-    if (['post', 'put', 'patch', 'delete'].includes(m)) {
-      const t = csrfStore.get()
-      if (t) (config.headers as Record<string, string>)['X-CSRF-Token'] = t
-    }
   }
   return config
 })
@@ -159,35 +145,18 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Request interceptor: /api/admin/* use only admin_token; /api/auth/* use only user token. Keep them separate.
+// Request interceptor to add token to auth API (do not send Bearer for login/register)
 authApi.interceptors.request.use((config) => {
-  const u = config.url ? String(config.url) : ''
-  const isUserLoginOrRegister = u.includes('/api/auth/login') || u.includes('/api/auth/register')
-  const isAdminLogin = u.includes('/api/admin/login')
-  if (isUserLoginOrRegister || isAdminLogin) {
-    delete (config.headers as Record<string, unknown>)['Authorization']
-    return config
+  const isLoginOrRegister =
+    config.url && (String(config.url).includes('/api/auth/login') || String(config.url).includes('/api/auth/register'))
+  if (isLoginOrRegister) {
+    return config // Authorization only after login
   }
-  if (u.includes('/api/admin/')) {
-    const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-    if (adminToken) config.headers.Authorization = `Bearer ${adminToken}`
-    else delete (config.headers as Record<string, unknown>)['Authorization']
-    return config
-  }
+  const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
   const userToken = getToken()
-  if (userToken) config.headers.Authorization = `Bearer ${userToken}`
-  else delete (config.headers as Record<string, unknown>)['Authorization']
-  return config
-})
-
-// Request interceptor: add X-CSRF-Token for state-changing methods (authApi)
-authApi.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const m = (config.method || 'get').toLowerCase()
-    if (['post', 'put', 'patch', 'delete'].includes(m)) {
-      const t = csrfStore.get()
-      if (t) (config.headers as Record<string, string>)['X-CSRF-Token'] = t
-    }
+  const token = adminToken || userToken
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
@@ -197,18 +166,6 @@ longRunningApi.interceptors.request.use((config) => {
   const token = getToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// Request interceptor: add X-CSRF-Token for state-changing methods (longRunningApi)
-longRunningApi.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const m = (config.method || 'get').toLowerCase()
-    if (['post', 'put', 'patch', 'delete'].includes(m)) {
-      const t = csrfStore.get()
-      if (t) (config.headers as Record<string, string>)['X-CSRF-Token'] = t
-    }
   }
   return config
 })
@@ -232,21 +189,16 @@ authApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+
+    // Do not refresh or redirect for login/register or for /refresh itself: show error once, no retry
     const u = String(originalRequest?.url || '')
-
-    // Admin 401: do not run user-token refresh or redirect to /en/login. Reject so admin layout can redirect to /admin/login.
-    if (u.includes('/api/admin/') && error.response?.status === 401) {
-      return Promise.reject(error)
-    }
-
-    // Do not refresh or redirect for login/register or for /refresh itself
     const isLoginOrRegister = u.includes('/api/auth/login') || u.includes('/api/auth/register')
     const isRefresh = u.includes('/api/auth/refresh')
     if (error.response?.status === 401 && (isLoginOrRegister || isRefresh)) {
       return Promise.reject(error)
     }
 
-    // Handle 401 errors (token expired) on protected user-auth endpoints only
+    // Handle 401 errors (token expired) on protected auth endpoints
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         // If already refreshing, queue this request
@@ -267,7 +219,7 @@ authApi.interceptors.response.use(
 
       // Try to refresh token
       const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
-
+      
       if (refreshToken) {
         try {
           // Call refresh endpoint directly to avoid circular dependency
@@ -275,15 +227,15 @@ authApi.interceptors.response.use(
             refresh_token: refreshToken
           })
           const newToken = response.data.access_token
-
+          
           if (newToken) {
             setToken(newToken)
             authApi.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
             originalRequest.headers.Authorization = `Bearer ${newToken}`
-
+            
             processQueue(null, newToken)
             isRefreshing = false
-
+            
             // Retry original request
             return authApi(originalRequest)
           }
@@ -291,13 +243,13 @@ authApi.interceptors.response.use(
           // Refresh failed, clear tokens and redirect to login
           processQueue(refreshError, null)
           isRefreshing = false
-
+          
           removeToken()
           if (typeof window !== 'undefined') {
             localStorage.removeItem('refresh_token')
           }
           delete authApi.defaults.headers.common['Authorization']
-
+          
           // Redirect to login if not already on login/register page
           if (typeof window !== 'undefined') {
             const pathname = window.location.pathname
@@ -460,18 +412,26 @@ export const apiClient = {
   // Batch prediction
   async predictBatch(cars: CarFeatures[]): Promise<BatchPredictionResult[]> {
     try {
+      console.log('🔮 [API] predictBatch called with', cars.length, 'cars')
+
       // Try to use batch endpoint if available, otherwise fall back to individual calls
       try {
+        console.log('🚀 [API] Attempting batch endpoint /api/predict/batch')
         const response = await api.post<{ predictions: BatchPredictionResult[] }>('/api/predict/batch', {
           cars,
         })
+        console.log('✅ [API] Batch endpoint successful:', response.data.predictions.length, 'predictions')
         return response.data.predictions
-      } catch (_batchError) {
-        // Fallback: make individual calls
+      } catch (batchError) {
+        console.warn('⚠️ [API] Batch endpoint failed, falling back to individual calls:', batchError)
+
+        // Fallback: make individual calls with progress tracking
+        console.log('🔄 [API] Making individual prediction calls...')
         const predictions: BatchPredictionResult[] = []
 
         for (let i = 0; i < cars.length; i++) {
           const car = cars[i]
+          console.log(`🚗 [API] Predicting ${i + 1}/${cars.length}: ${car.make} ${car.model}`)
 
           try {
             const result = await this.predictPrice(car)
@@ -480,8 +440,9 @@ export const apiClient = {
               predicted_price: result.predicted_price,
               confidence_interval: result.confidence_interval,
             })
+            console.log(`✅ [API] Prediction ${i + 1}/${cars.length} successful: $${result.predicted_price}`)
           } catch (carError: any) {
-            console.error(`[API] Prediction ${i + 1}/${cars.length} failed:`, carError)
+            console.error(`❌ [API] Prediction ${i + 1}/${cars.length} failed:`, carError)
             // Include failed item with error message
             predictions.push({
               car,
@@ -492,6 +453,7 @@ export const apiClient = {
           }
         }
 
+        console.log('✅ [API] Individual predictions completed:', predictions.length, 'successful')
         return predictions
       }
     } catch (error) {
@@ -538,12 +500,12 @@ export const apiClient = {
     )
   },
 
-  // Fallback when /api/cars/locations fails (dataset-only cities from iqcars_cleaned; no fake locations)
+  // Fallback when /api/cars/locations fails or dataset has no locations (e.g. after DB reset, backend down)
   async getLocations(): Promise<string[]> {
     const LOCATIONS_FALLBACK = [
       'Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok',
-      'Al-Fallujah', 'Ramadi', 'Samarra', 'Nasiriyah', 'Hillah', 'Kut', 'Amarah', 'Diwaniyah', 'Haswa',
-      'Dhi Qar', 'Maysan', 'Muthanna', 'Anbar', 'Diala', 'Zaxo', 'Halabja', 'Chamchamal', 'Babil',
+      'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah',
+      'Dubai', 'Abu Dhabi', 'California', 'Texas', 'New York', 'London', 'Berlin', 'Istanbul',
     ]
     return apiCache.getOrFetch(
       '/api/cars/locations',
@@ -810,7 +772,7 @@ export const apiClient = {
         throw new Error('You must accept the Terms of Service')
       }
 
-      const response = await authApi.post<{
+      const response = await authApi.post<{ 
         access_token: string
         refresh_token?: string
         user: { id: number; email: string; full_name?: string; email_verified: boolean }
@@ -864,7 +826,7 @@ export const apiClient = {
         throw new Error('Email and password are required')
       }
 
-      const response = await authApi.post<{
+      const response = await authApi.post<{ 
         access_token: string
         refresh_token?: string
         user: { id: number; email: string; full_name?: string; email_verified: boolean }
@@ -1235,24 +1197,14 @@ export const apiClient = {
         throw new Error('URL is required')
       }
 
-      const response = await api.post<{
-        success?: boolean
-        data?: any
-        error?: string
-        extracted_data?: CarFeatures
-        predicted_price?: number
-        listing_price?: number
-        price_comparison?: any
-        confidence_interval?: { lower: number; upper: number }
-        message?: string
-      }>('/api/predict/from-url', { url: url.trim() })
+      const response = await api.post<{ success: boolean; data?: any; error?: string }>('/api/predict/from-url', { url: url.trim() })
 
-      const d = response.data
+      // Handle new backend format: { success: true, data: {...} }
+      if (response.data.success && response.data.data) {
+        const data = response.data.data
 
-      // Handle wrapped format: { success: true, data: {...} }
-      if (d.success && d.data) {
-        const data = d.data
-        return {
+        // Map backend response to frontend format
+        const result = {
           extracted_data: {
             make: data.make,
             model: data.model,
@@ -1266,7 +1218,10 @@ export const apiClient = {
           } as CarFeatures,
           predicted_price: data.predicted_price,
           listing_price: data.listing_price,
-          confidence_interval: data.price_range ? { lower: data.price_range.min, upper: data.price_range.max } : undefined,
+          confidence_interval: data.price_range ? {
+            lower: data.price_range.min,
+            upper: data.price_range.max,
+          } : undefined,
           price_comparison: data.listing_price && data.predicted_price ? {
             listing_price: data.listing_price,
             predicted_price: data.predicted_price,
@@ -1277,22 +1232,13 @@ export const apiClient = {
           } : undefined,
           message: data.deal_explanation || data.message,
         }
+
+        return result
       }
 
-      // Handle direct UrlPredictionResponse: { extracted_data, predicted_price, ... }
-      if (d.extracted_data && typeof d.predicted_price === 'number') {
-        return {
-          extracted_data: d.extracted_data,
-          predicted_price: d.predicted_price,
-          listing_price: d.listing_price,
-          price_comparison: d.price_comparison,
-          confidence_interval: d.confidence_interval,
-          message: d.message,
-        }
-      }
-
-      if (d.error) {
-        throw new Error(typeof d.error === 'string' ? d.error : 'Unknown error')
+      // Handle error response
+      if (response.data.error) {
+        throw new Error(response.data.error)
       }
 
       throw new Error('Invalid response format from server')
@@ -1315,12 +1261,9 @@ export const apiClient = {
       }
 
       if (error.response?.status === 400) {
-        const raw = error.response?.data?.detail
-        const errorDetail = Array.isArray(raw)
-          ? (raw.map((x: { msg?: string }) => x?.msg || JSON.stringify(x)).join('; ') || error.message)
-          : (typeof raw === 'string' ? raw : error.message)
-        if (String(errorDetail).includes('Unsupported platform') || String(errorDetail).includes('Invalid URL')) {
-          throw new Error(`Invalid URL - ${errorDetail}`)
+        const errorDetail = error.response?.data?.detail || error.message
+        if (errorDetail.includes('Unsupported platform') || errorDetail.includes('Invalid URL format')) {
+          throw new Error(`Invalid URL format - ${errorDetail}`)
         }
         throw new Error(errorDetail || 'Invalid request')
       }
@@ -1340,65 +1283,20 @@ export const apiClient = {
     image_features?: number[]
   }): Promise<{ prediction_id: number; success: boolean }> {
     try {
-      // Build payload, filtering out undefined/null values
-      const payload: any = {
-        car_features: prediction.car_features || {},
-        predicted_price: prediction.predicted_price
-      }
-      
-      // Only include optional fields if they have values
-      if (prediction.confidence_interval) {
-        payload.confidence_interval = prediction.confidence_interval
-      }
-      if (prediction.confidence_level) {
-        payload.confidence_level = prediction.confidence_level
-      }
-      if (prediction.image_features && Array.isArray(prediction.image_features) && prediction.image_features.length > 0) {
-        payload.image_features = prediction.image_features
-      }
-      
-      // Ensure car_features has required fields with safe defaults
-      if (!payload.car_features.year && payload.car_features.year !== 0) {
-        payload.car_features.year = payload.car_features.year || 2020
-      }
-      if (!payload.car_features.mileage && payload.car_features.mileage !== 0) {
-        payload.car_features.mileage = payload.car_features.mileage || 0
-      }
-      if (!payload.car_features.engine_size && payload.car_features.engine_size !== 0) {
-        payload.car_features.engine_size = payload.car_features.engine_size || 2.0
-      }
-      if (!payload.car_features.cylinders && payload.car_features.cylinders !== 0) {
-        payload.car_features.cylinders = payload.car_features.cylinders || 4
-      }
-      if (!payload.car_features.make) {
-        payload.car_features.make = payload.car_features.make || ''
-      }
-      if (!payload.car_features.model) {
-        payload.car_features.model = payload.car_features.model || ''
-      }
-      if (!payload.car_features.condition) {
-        payload.car_features.condition = payload.car_features.condition || 'Good'
-      }
-      if (!payload.car_features.location) {
-        payload.car_features.location = payload.car_features.location || 'Unknown'
-      }
-      
       const response = await api.post<{ prediction_id: number; success: boolean }>(
         '/api/feedback/predictions',
-        payload
+        {
+          car_features: prediction.car_features,
+          predicted_price: prediction.predicted_price,
+          confidence_interval: prediction.confidence_interval,
+          confidence_level: prediction.confidence_level,
+          image_features: prediction.image_features
+        }
       )
       return response.data
-    } catch (error: any) {
-      // Handle 422 validation errors gracefully
-      if (error.response?.status === 422) {
-        const errorDetail = error.response?.data?.detail || 'Validation error'
-        console.warn('Prediction save validation error:', errorDetail)
-        // Don't throw, just log - prediction still works without saving
-        return { prediction_id: 0, success: false }
-      }
+    } catch (error) {
       console.error('Error saving prediction:', error)
-      // Don't throw for non-critical errors
-      return { prediction_id: 0, success: false }
+      throw new Error(handleError(error))
     }
   },
 
@@ -1500,21 +1398,16 @@ export const apiClient = {
     }
   },
 
-  // Admin API (Next.js /api/admin/*: login, logout, me use httpOnly cookie + optional localStorage token for backend)
+  // Admin API
   async adminLogin(email: string, password: string): Promise<{ access_token: string; admin: { id: number; email: string; name: string; role: string } }> {
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Invalid email or password')
-      if (data.access_token && typeof window !== 'undefined') {
-        localStorage.setItem('admin_token', data.access_token)
+      const response = await authApi.post('/api/admin/login', { email, password })
+      const token = response.data.access_token
+      if (token) {
+        localStorage.setItem('admin_token', token)
+        authApi.defaults.headers.common['Authorization'] = `Bearer ${token}`
       }
-      return { access_token: data.access_token, admin: data.admin }
+      return response.data
     } catch (error) {
       throw new Error(handleError(error))
     }
@@ -1522,24 +1415,19 @@ export const apiClient = {
 
   async adminLogout(): Promise<void> {
     try {
-      await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {})
+      await authApi.post('/api/admin/logout').catch(() => {})
     } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_info')
-      }
+      localStorage.removeItem('admin_token')
+      delete authApi.defaults.headers.common['Authorization']
     }
   },
 
   async getAdminMe(): Promise<{ id: number; email: string; name: string; role: string }> {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-      const res = await fetch('/api/admin/me', {
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (!res.ok) throw new Error('Not authenticated')
-      return res.json()
+      const token = localStorage.getItem('admin_token')
+      if (!token) throw new Error('No admin token')
+      const response = await authApi.get('/api/admin/me')
+      return response.data
     } catch (error) {
       throw new Error(handleError(error))
     }
@@ -1676,63 +1564,6 @@ export const apiClient = {
     }
   },
 
-  async getAdminListings(params: {
-    page?: number
-    page_size?: number
-    status?: string
-    search?: string
-  } = {}): Promise<{ items: any[]; total: number }> {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-      const q = new URLSearchParams()
-      if (params.page != null) q.set('page', String(params.page))
-      if (params.page_size != null) q.set('page_size', String(params.page_size))
-      if (params.status) q.set('status', params.status)
-      if (params.search) q.set('search', params.search)
-      const res = await fetch(`/api/admin/listings?${q.toString()}`, {
-        credentials: 'include',
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Failed to load listings')
-      return { items: data.items ?? data.listings ?? [], total: data.total ?? 0 }
-    } catch (error) {
-      throw new Error(handleError(error))
-    }
-  },
-
-  async adminPatchListing(id: number, body: { status?: string; [k: string]: unknown }): Promise<any> {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-      const res = await fetch(`/api/admin/listings/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify(body),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Update failed')
-      return data
-    } catch (error) {
-      throw new Error(handleError(error))
-    }
-  },
-
-  async adminDeleteListing(id: number): Promise<void> {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-      const res = await fetch(`/api/admin/listings/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Delete failed')
-    } catch (error) {
-      throw new Error(handleError(error))
-    }
-  },
-
   // Marketplace API
   async createListing(listing: any): Promise<{ listing_id: number; success: boolean }> {
     try {
@@ -1784,11 +1615,10 @@ export const apiClient = {
       // Use long-running API instance with 120 second timeout
       const response = await longRunningApi.post(`/api/marketplace/listings/${listingId}/auto-detect`)
       return response.data
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { status?: string } }; code?: string; message?: string }
+    } catch (error) {
       // If backend returns error response (not exception), return it
       if (error.response?.data?.status === 'error') {
-        return error.response.data as { success: boolean; status?: 'ok' | 'low_confidence' | 'error'; error?: string; detection: any; prefill: { make?: string; model?: string; color?: string; year?: number }; confidence_level?: 'high' | 'medium' | 'low' }
+        return error.response.data
       }
       // Handle timeout specifically
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
@@ -1800,7 +1630,7 @@ export const apiClient = {
           prefill: {}
         }
       }
-      throw new Error(handleError(err))
+      throw new Error(handleError(error))
     }
   },
 
@@ -1902,27 +1732,9 @@ export const apiClient = {
     }
   },
 
-  async markListingAsAvailable(listingId: number): Promise<any> {
-    try {
-      const response = await api.put(`/api/marketplace/listings/${listingId}/mark-available`)
-      return response.data
-    } catch (error) {
-      throw new Error(handleError(error))
-    }
-  },
-
   async deleteListing(listingId: number): Promise<any> {
     try {
       const response = await api.delete(`/api/marketplace/listings/${listingId}`)
-      return response.data
-    } catch (error) {
-      throw new Error(handleError(error))
-    }
-  },
-
-  async reportListing(listingId: number, data: { reason: string; details: string }): Promise<{ success: boolean; message?: string }> {
-    try {
-      const response = await api.post(`/api/marketplace/listings/${listingId}/report`, data)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -1978,6 +1790,134 @@ export const apiClient = {
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
+    }
+  },
+
+  // Messaging API
+  async sendMessage(listingId: number, recipientId: number, content: string, imageUrl?: string): Promise<any> {
+    try {
+      const response = await api.post('/api/messaging/messages', {
+        listing_id: listingId,
+        recipient_id: recipientId,
+        content,
+        image_url: imageUrl
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async getMessages(listingId: number, otherUserId: number, limit: number = 50, offset: number = 0): Promise<any> {
+    try {
+      const response = await api.get('/api/messaging/messages', {
+        params: { listing_id: listingId, other_user_id: otherUserId, limit, offset }
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async getConversations(): Promise<any> {
+    try {
+      const response = await api.get('/api/messaging/conversations')
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async getUnreadCount(): Promise<number> {
+    try {
+      const response = await api.get('/api/messaging/messages/unread-count')
+      return response.data.unread_count || 0
+    } catch (error) {
+      return 0
+    }
+  },
+
+  async markMessagesAsRead(listingId: number, otherUserId: number): Promise<any> {
+    try {
+      const response = await api.post('/api/messaging/messages/mark-read', {
+        listing_id: listingId,
+        other_user_id: otherUserId
+      })
+      return response.data
+    } catch (error) {
+      // Ignore errors for marking as read
+      return { success: false }
+    }
+  },
+
+  async blockUser(conversationId: number): Promise<any> {
+    try {
+      const response = await api.post(`/api/messaging/conversations/${conversationId}/block`)
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async unblockUser(conversationId: number): Promise<any> {
+    try {
+      const response = await api.post(`/api/messaging/conversations/${conversationId}/unblock`)
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async reportMessage(messageId: number, reason?: string): Promise<any> {
+    try {
+      const response = await api.post(`/api/messaging/messages/${messageId}/report`, null, {
+        params: { reason }
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async deleteConversation(conversationId: number): Promise<any> {
+    try {
+      const response = await api.delete(`/api/messaging/conversations/${conversationId}`)
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async starConversation(conversationId: number, starred: boolean): Promise<any> {
+    try {
+      const response = await api.post(`/api/messaging/conversations/${conversationId}/star`, null, {
+        params: { starred }
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async setTypingIndicator(conversationId: number, isTyping: boolean): Promise<any> {
+    try {
+      const response = await api.post('/api/messaging/typing-indicator', {
+        conversation_id: conversationId,
+        is_typing: isTyping
+      })
+      return response.data
+    } catch (error) {
+      // Ignore errors for typing indicator
+      return { success: false }
+    }
+  },
+
+  async getTypingIndicator(conversationId: number): Promise<boolean> {
+    try {
+      const response = await api.get(`/api/messaging/typing-indicator/${conversationId}`)
+      return response.data.is_typing || false
+    } catch (error) {
+      return false
     }
   },
 

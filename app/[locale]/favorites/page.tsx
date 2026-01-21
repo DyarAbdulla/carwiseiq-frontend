@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
@@ -35,7 +35,16 @@ export default function FavoritesPage() {
     location: ''
   })
 
-  const loadFavorites = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadFavorites()
+  }, [page, sortBy, filters, isAuthenticated, authLoading])
+
+  const loadFavorites = async () => {
     if (!isAuthenticated) return
 
     setLoading(true)
@@ -76,16 +85,7 @@ export default function FavoritesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, sortBy, filters, isAuthenticated, toast, t, tCommon])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!isAuthenticated) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadFavorites()
-  }, [authLoading, isAuthenticated, router, locale, loadFavorites])
+  }
 
   const formatTimeAgo = (date: string) => {
     const now = new Date()
@@ -123,46 +123,83 @@ export default function FavoritesPage() {
           <p className="text-gray-400">{t('subtitle')}</p>
         </div>
 
-        {/* Controls: sort (simplified) + grid/list icons only */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
+        {/* Controls */}
+        <div className="flex flex-wrap gap-4 mb-6">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="min-w-[160px] min-h-[44px] bg-white/5 border-white/10 text-white">
+            <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
               <SelectValue placeholder={t('sortBy')} />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-white/10">
-              <SelectItem value="recently_saved" className="text-white">{t('recentlySaved')}</SelectItem>
-              <SelectItem value="price_low" className="text-white">{t('priceLow')}</SelectItem>
-              <SelectItem value="price_high" className="text-white">{t('priceHigh')}</SelectItem>
-              <SelectItem value="newest_listings" className="text-white">{t('newestListings')}</SelectItem>
+            <SelectContent>
+              <SelectItem value="recently_saved">{t('recentlySaved')}</SelectItem>
+              <SelectItem value="price_low">{t('priceLow')}</SelectItem>
+              <SelectItem value="price_high">{t('priceHigh')}</SelectItem>
+              <SelectItem value="newest_listings">{t('newestListings')}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex rounded-xl border border-white/10 p-1 bg-white/5">
-            <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('grid')} className={`min-w-[44px] min-h-[44px] ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`} aria-label="Grid view"><Grid className="h-4 w-4" /></Button>
-            <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('list')} className={`min-w-[44px] min-h-[44px] ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`} aria-label="List view"><List className="h-4 w-4" /></Button>
+
+          <div className="flex gap-2 border border-gray-700 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className={viewMode === 'grid' ? 'bg-gray-700' : ''}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className={viewMode === 'list' ? 'bg-gray-700' : ''}
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        {/* Filters — collapsed on mobile, expandable */}
-        <Card className="bg-gray-800/80 border-white/10 mb-6">
+        {/* Filters */}
+        <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Filter className="h-4 w-4 text-slate-400" />
+              <Filter className="h-4 w-4 text-gray-400" />
               <span className="text-white font-semibold">{t('filters')}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">{t('priceRange')}</label>
+                <label className="text-gray-300 text-sm mb-2 block">{t('priceRange')}</label>
                 <div className="flex gap-2">
-                  <input type="number" placeholder={t('min')} value={filters.min_price} onChange={(e) => setFilters({ ...filters, min_price: e.target.value })} className="flex-1 min-h-[44px] px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base" />
-                  <input type="number" placeholder={t('max')} value={filters.max_price} onChange={(e) => setFilters({ ...filters, max_price: e.target.value })} className="flex-1 min-h-[44px] px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base" />
+                  <input
+                    type="number"
+                    placeholder={t('min')}
+                    value={filters.min_price}
+                    onChange={(e) => setFilters({ ...filters, min_price: e.target.value })}
+                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                  />
+                  <input
+                    type="number"
+                    placeholder={t('max')}
+                    value={filters.max_price}
+                    onChange={(e) => setFilters({ ...filters, max_price: e.target.value })}
+                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                  />
                 </div>
               </div>
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">{t('location')}</label>
-                <input type="text" placeholder={t('cityOrState')} value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} className="w-full min-h-[44px] px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base" />
+                <label className="text-gray-300 text-sm mb-2 block">{t('location')}</label>
+                <input
+                  type="text"
+                  placeholder={t('cityOrState')}
+                  value={filters.location}
+                  onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                />
               </div>
               <div className="flex items-end">
-                <Button onClick={() => setFilters({ min_price: '', max_price: '', makes: [], location: '' })} variant="outline" className="min-h-[44px] border-white/20 bg-white/5 text-white">
+                <Button
+                  onClick={() => setFilters({ min_price: '', max_price: '', makes: [], location: '' })}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300"
+                >
                   {t('clearFilters')}
                 </Button>
               </div>
@@ -174,16 +211,17 @@ export default function FavoritesPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-400">{t('loadingFavorites')}</div>
         ) : listings.length === 0 ? (
-          <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
-            <CardContent className="p-8 sm:p-12 text-center">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
-                <Heart className="h-12 w-12 text-slate-500" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">{t('noFavorites')}</h3>
-              <p className="text-slate-400 mb-6 max-w-sm mx-auto">
+          <Card className="bg-gray-800 border-gray-700">
+            <CardContent className="p-12 text-center">
+              <Heart className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+              <h3 className="text-xl font-semibold text-white mb-2">{t('noFavorites')}</h3>
+              <p className="text-gray-400 mb-6">
                 {t('noFavoritesDesc')}
               </p>
-              <Button onClick={() => router.push(`/${locale}/buy-sell`)} className="min-h-[44px] px-6 bg-indigo-600 hover:bg-indigo-500 text-white">
+              <Button
+                onClick={() => router.push(`/${locale}/buy-sell`)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 {t('browseListings')}
               </Button>
             </CardContent>
@@ -199,9 +237,9 @@ export default function FavoritesPage() {
                   <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
                     <div className={viewMode === 'grid' ? '' : 'flex'}>
                       <div className={`${viewMode === 'grid' ? 'aspect-video' : 'w-64'} bg-gray-700 rounded-t-lg overflow-hidden`}>
-                        {(listing.cover_thumbnail_url || listing.cover_image) ? (
+                        {listing.cover_image ? (
                           <img
-                            src={listingImageUrl(listing.cover_thumbnail_url || listing.cover_image)}
+                            src={listingImageUrl(listing.cover_image)}
                             alt={`${listing.make} ${listing.model}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {

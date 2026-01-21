@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 import {
   Loader2, Search, Car, ArrowRight, Heart, MapPin, Gauge,
   TrendingDown, Save, X, ChevronDown, ChevronUp, Grid3x3, List,
-  CheckCircle2, Trophy, Flame, Sparkles, Bookmark, GitCompare, Filter
+  CheckCircle2, Trophy, Flame, Sparkles, Bookmark, GitCompare
 } from 'lucide-react'
 import { ComparisonBar } from '@/components/marketplace/ComparisonBar'
 import { ListingCardSkeleton } from '@/components/common/LoadingSkeleton'
@@ -70,9 +70,8 @@ export default function BudgetPage() {
   const [maxPrice, setMaxPrice] = useState<number>(100000)
   const [selectedMake, setSelectedMake] = useState<string>('')
   const [selectedModel, setSelectedModel] = useState<string>('')
-  const [minYear, setMinYear] = useState<number>(2010)
+  const [minYear, setMinYear] = useState<number>(2000)
   const [maxYear, setMaxYear] = useState<number>(2025)
-  const [yearRange, setYearRange] = useState<{ min: number; max: number }>({ min: 2010, max: 2025 })
   const [maxMileage, setMaxMileage] = useState<number>(200000)
   const [condition, setCondition] = useState<string>('')
   const [fuelType, setFuelType] = useState<string>('')
@@ -104,7 +103,6 @@ export default function BudgetPage() {
   }>>([])
   const [favorites, setFavorites] = useState<Set<number>>(new Set())
   const [filtersOpen, setFiltersOpen] = useState(true)
-  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
   const pageSize = 20
 
   // Hooks must be called unconditionally BEFORE any conditional returns
@@ -129,7 +127,7 @@ export default function BudgetPage() {
     if (maxPrice < 200000) count++
     if (selectedMake) count++
     if (selectedModel) count++
-    if (minYear > 2010) count++
+    if (minYear > 2000) count++
     if (maxYear < 2025) count++
     if (maxMileage < 200000) count++
     if (condition) count++
@@ -281,7 +279,6 @@ export default function BudgetPage() {
     }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSearch omitted to avoid recreating interval on every form change
   }, [results, currentPage, loading])
 
   useEffect(() => {
@@ -292,22 +289,6 @@ export default function BudgetPage() {
       setSelectedModel('')
     }
   }, [selectedMake])
-
-  // Year range: use 2010–2025 when make is selected (getAvailableYears not in API)
-  useEffect(() => {
-    if (selectedMake && selectedMake.trim() !== '') {
-      setYearRange({ min: 2010, max: 2025 })
-      setMinYear((prev) => Math.max(2010, Math.min(2025, prev)))
-      setMaxYear((prev) => Math.max(2010, Math.min(2025, prev)))
-    } else {
-      setYearRange({ min: 2010, max: 2025 })
-    }
-  }, [selectedMake, selectedModel])
-
-  // Ensure minYear <= maxYear after year range or user changes
-  useEffect(() => {
-    if (minYear > maxYear) setMaxYear(minYear)
-  }, [minYear, maxYear])
 
   // Quick filter handlers with preset budgets
   const quickFilters = [
@@ -364,6 +345,16 @@ export default function BudgetPage() {
         }
         if (!data.results) {
           data.results = []
+        }
+        // Debug logging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Budget search response:', {
+            total: data.total,
+            resultsCount: data.results?.length || 0,
+            page: data.page,
+            pageSize: data.page_size,
+            firstResult: data.results?.[0]
+          })
         }
         setResults(data)
         
@@ -480,9 +471,8 @@ export default function BudgetPage() {
     setMaxPrice(100000)
     setSelectedMake('')
     setSelectedModel('')
-    setMinYear(2010)
+    setMinYear(2000)
     setMaxYear(2025)
-    setYearRange({ min: 2010, max: 2025 })
     setMaxMileage(200000)
     setCondition('')
     setFuelType('')
@@ -499,7 +489,7 @@ export default function BudgetPage() {
     if (!car) return
 
     const newSelected = new Set(selectedCars)
-    const carId: number = car.listing_id ?? index
+    const carId = car.listing_id || car.make + car.model + car.year + index
     
     if (newSelected.has(index)) {
       newSelected.delete(index)
@@ -718,116 +708,33 @@ export default function BudgetPage() {
         </div>
       </motion.div>
 
-      <div className="container px-4 sm:px-6 lg:px-8 py-6 md:py-12 pb-24 md:pb-12">
+      <div className="container px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="mx-auto max-w-7xl">
-          {/* Preset budget chips — horizontal scroll on mobile */}
+          {/* Quick Filter Chips */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            className="mb-6 flex flex-wrap gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide"
           >
             {quickFilters.map((filter, idx) => (
               <motion.button
                 key={filter.label}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ delay: idx * 0.1 }}
                 onClick={filter.action}
-                className="shrink-0 min-h-[44px] px-4 py-2.5 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-white text-sm hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
+                className="px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-white text-sm hover:bg-white/10 transition-all duration-200 whitespace-nowrap flex-shrink-0"
               >
                 {filter.label}
               </motion.button>
             ))}
           </motion.div>
 
-          {/* Mobile: one budget input + Filters button (filters in bottom sheet) */}
-          <div className="md:hidden mb-4 space-y-3">
-            <Label className="text-white">Budget ($)</Label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              placeholder="e.g. 20000"
-              value={budget || ''}
-              onChange={(e) => setBudget(e.target.value ? parseFloat(e.target.value) : null)}
-              className="w-full min-h-[44px] border-white/20 bg-white/5 text-white text-base"
-            />
-            <Button
-              variant="outline"
-              onClick={() => setFiltersSheetOpen(true)}
-              className="w-full min-h-[44px] border-white/20 bg-white/5 hover:bg-white/10 text-white"
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
-            </Button>
-          </div>
-
-          {/* Mobile: bottom sheet for filters */}
-          <AnimatePresence>
-            {filtersSheetOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm md:hidden"
-                  onClick={() => setFiltersSheetOpen(false)}
-                  aria-hidden
-                />
-                <motion.div
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                  className="fixed bottom-0 left-0 right-0 z-[91] max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#1a1d29] md:hidden"
-                >
-                  <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#1a1d29]">
-                    <span className="font-semibold text-white">Filters</span>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-white min-w-[44px] min-h-[44px]" onClick={() => setFiltersSheetOpen(false)} aria-label="Close"><X className="h-5 w-5" /></Button>
-                  </div>
-                  <div className="p-4 space-y-4">
-                    {!budget || budget <= 0 ? (
-                      <div className="grid gap-2">
-                        <Label className="text-white">Min: {formatCurrency(minPrice)}</Label>
-                        <Slider value={[minPrice]} onValueChange={(v) => { setMinPrice(Array.isArray(v) ? v[0] : v); setBudget(null) }} min={0} max={200000} step={1000} className="w-full" />
-                        <Label className="text-white">Max: {formatCurrency(maxPrice)}</Label>
-                        <Slider value={[maxPrice]} onValueChange={(v) => { setMaxPrice(Array.isArray(v) ? v[0] : v); setBudget(null) }} min={0} max={200000} step={1000} className="w-full" />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-400">Budget ±15%: {formatCurrency(budget * 0.85)} – {formatCurrency(budget * 1.15)}</p>
-                    )}
-                    <div className="grid gap-2">
-                      <Label className="text-white">{(t && typeof t === 'function' ? t('preferredMakes') : null) || 'Make'}</Label>
-                      <Select value={selectedMake || '__all__'} onValueChange={(v) => setSelectedMake(v === '__all__' ? '' : v)}>
-                        <SelectTrigger className="min-h-[44px] border-white/20 bg-white/5 text-white"><SelectValue placeholder="All" /></SelectTrigger>
-                        <SelectContent className="bg-[#1a1d29] border-white/10"><SelectItem value="__all__" className="text-white">All</SelectItem>{makes.map((m) => <SelectItem key={m} value={m} className="text-white">{m}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-white">{(t && typeof t === 'function' ? t('minYear') : null) || 'Min Year'}: {minYear}</Label>
-                      <Slider value={[minYear]} onValueChange={(v) => setMinYear(Array.isArray(v) ? v[0] : v)} min={yearRange.min} max={Math.min(yearRange.max, maxYear)} step={1} className="w-full" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-white">Max Year: {maxYear}</Label>
-                      <Slider value={[maxYear]} onValueChange={(v) => setMaxYear(Array.isArray(v) ? v[0] : v)} min={Math.max(yearRange.min, minYear)} max={yearRange.max} step={1} className="w-full" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-white">{(t && typeof t === 'function' ? t('maxMileage') : null) || 'Max Mileage'}: {formatNumber(maxMileage)} km</Label>
-                      <Slider value={[maxMileage]} onValueChange={(v) => setMaxMileage(Array.isArray(v) ? v[0] : v)} min={0} max={500000} step={1000} className="w-full" />
-                    </div>
-                    <Button variant="outline" className="w-full min-h-[44px] border-white/20 bg-white/5 text-white" onClick={() => setFiltersSheetOpen(false)}>Apply</Button>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* Desktop: Filters Card */}
+          {/* Filters Card with Glassmorphism */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="hidden md:block"
           >
             <Card className="border-white/10 bg-white/5 backdrop-blur-xl mb-8 shadow-2xl">
               <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -845,7 +752,7 @@ export default function BudgetPage() {
                       <Button
                         onClick={() => handleSearch(1)}
                         disabled={loading}
-                        className="bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 text-white min-h-[44px]"
+                        className="bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 text-white"
                       >
                         {loading ? (
                           <>
@@ -862,14 +769,14 @@ export default function BudgetPage() {
                       <Button
                         onClick={handleReset}
                         variant="outline"
-                        className="border-white/20 bg-white/5 hover:bg-white/10 text-white min-h-[44px]"
+                        className="border-white/20 bg-white/5 hover:bg-white/10 text-white"
                       >
                         <X className="mr-2 h-4 w-4" />
                         Reset
                       </Button>
                       <Button
                         variant="outline"
-                        className="border-white/20 bg-white/5 hover:bg-white/10 text-white"
+                        className="border-white/20 bg-white/5 hover:bg-white/10 text-white md:hidden"
                         onClick={() => setFiltersOpen(!filtersOpen)}
                       >
                         {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -1009,27 +916,13 @@ export default function BudgetPage() {
                             const value = Array.isArray(values) ? values[0] : values
                             setMinYear(value)
                           }}
-                          min={yearRange.min}
-                          max={Math.min(yearRange.max, maxYear)}
+                          min={1900}
+                          max={2026}
                           step={1}
                           className="w-full"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-white">Max Year: {maxYear}</Label>
-                        <Slider
-                          value={[maxYear]}
-                          onValueChange={(values) => {
-                            const value = Array.isArray(values) ? values[0] : values
-                            setMaxYear(value)
-                          }}
-                          min={Math.max(yearRange.min, minYear)}
-                          max={yearRange.max}
-                          step={1}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
                         <Label className="text-white">{(t && typeof t === 'function' ? t('maxMileage') : null) || 'Max Mileage'}: {formatNumber(maxMileage)} km</Label>
                         <Slider
                           value={[maxMileage]}
@@ -1148,11 +1041,11 @@ export default function BudgetPage() {
           {/* Results Section */}
           <div id="results-section">
             {loading && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <ListingCardSkeleton key={i} />
-                ))}
-              </div>
+              <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
+                <CardContent className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#5B7FFF]" />
+                </CardContent>
+              </Card>
             )}
 
             {!loading && results && (
@@ -1362,7 +1255,7 @@ export default function BudgetPage() {
                     <CardContent className="py-12 text-center">
                       <p className="text-red-400 font-semibold mb-2">Error Loading Data</p>
                       <p className="text-white/70">{results.error}</p>
-                      <p className="text-white/50 text-sm mt-4">Please check if data/iqcars_cleaned.csv exists and the backend server is running.</p>
+                      <p className="text-white/50 text-sm mt-4">Please check if cleaned_car_data.csv exists and the backend server is running.</p>
                     </CardContent>
                   </Card>
                 ) : !results.results || !Array.isArray(results.results) || results.results.length === 0 ? (
@@ -1406,6 +1299,7 @@ export default function BudgetPage() {
                     <AnimatePresence mode="popLayout">
                       {sortedResults.map((car, index) => {
                         if (!car || typeof car !== 'object') {
+                          console.warn('Invalid car data at index', index, car)
                           return null
                         }
                         
@@ -1441,9 +1335,9 @@ export default function BudgetPage() {
                             <Card className={`border-white/10 bg-white/5 backdrop-blur-xl hover:border-[#5B7FFF]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#5B7FFF]/20 ${
                               viewMode === 'list' ? 'flex flex-row' : ''
                             }`}>
-                              {/* Car Image — full width top, rounded; Favorite overlay top-right */}
+                              {/* Car Image */}
                               {viewMode === 'grid' && (
-                                <div className="relative w-full aspect-[16/10] rounded-t-2xl overflow-hidden bg-gradient-to-br from-[#5B7FFF]/20 to-[#8B5CF6]/20">
+                                <div className="relative h-48 bg-gradient-to-br from-[#5B7FFF]/20 to-[#8B5CF6]/20 flex items-center justify-center overflow-hidden">
                                   {carImageUrl ? (
                                     <Image
                                       src={carImageUrl}
@@ -1459,21 +1353,24 @@ export default function BudgetPage() {
                                     />
                                   ) : (
                                     <Car
-                                      className="h-24 w-24 opacity-50 absolute inset-0 m-auto"
+                                      className="h-24 w-24 opacity-50"
                                       style={{ color: getCarIconColor(car.make) }}
                                       aria-hidden="true"
                                     />
                                   )}
-                                  {/* Favorite (❤) top-right overlay */}
-                                  <div className="absolute top-2 right-2 rtl:right-auto rtl:left-2 flex gap-2">
-                                    {badges.some(b => b.label === 'Best Deal') && (
-                                      <Badge className="bg-green-500/90 backdrop-blur-sm text-white border-white/20 text-xs">Best Deal</Badge>
-                                    )}
+                                  <div className="absolute top-2 right-2 flex gap-2">
                                     {car.is_new && (
-                                      <Badge className="bg-green-500/90 backdrop-blur-sm text-white border-white/20 text-xs">New</Badge>
+                                      <Badge className="bg-green-500/90 backdrop-blur-sm text-white border-white/20 text-xs">
+                                        New
+                                      </Badge>
                                     )}
-                                    <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm" onClick={() => toggleFavorite(index)} aria-label="Favorite">
-                                      <Heart className={`h-5 w-5 ${favorites.has(index) ? 'fill-red-500 text-red-500' : ''}`} />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+                                      onClick={() => toggleFavorite(index)}
+                                    >
+                                      <Heart className={`h-4 w-4 ${favorites.has(index) ? 'fill-red-500 text-red-500' : ''}`} />
                                     </Button>
                                   </div>
                                   <div className="absolute bottom-2 left-2 flex gap-2">
@@ -1605,7 +1502,7 @@ export default function BudgetPage() {
                                     <motion.div
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
-                                      className="text-2xl sm:text-3xl font-bold text-white"
+                                      className="text-3xl font-bold text-white"
                                     >
                                       {formatCurrency(car?.price || 0)}
                                     </motion.div>
@@ -1802,7 +1699,7 @@ export default function BudgetPage() {
           <DialogHeader>
             <DialogTitle className="text-white">Save This Search</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Give your search a name and we&apos;ll notify you when new cars match your criteria
+              Give your search a name and we'll notify you when new cars match your criteria
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1827,7 +1724,7 @@ export default function BudgetPage() {
                 {maxPrice < 200000 && <li>Max price: ${maxPrice.toLocaleString()}</li>}
                 {selectedMake && <li>Make: {selectedMake}</li>}
                 {selectedModel && <li>Model: {selectedModel}</li>}
-                {minYear > 2010 && <li>Min year: {minYear}</li>}
+                {minYear > 2000 && <li>Min year: {minYear}</li>}
                 {maxYear < 2025 && <li>Max year: {maxYear}</li>}
                 {maxMileage < 200000 && <li>Max mileage: {maxMileage.toLocaleString()} km</li>}
                 {condition && <li>Condition: {condition}</li>}
@@ -1857,18 +1754,6 @@ export default function BudgetPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Mobile: sticky bottom bar — Reset + Find Cars (always visible) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-950/95 backdrop-blur-xl border-t border-white/10 md:hidden">
-        <Button onClick={handleReset} variant="outline" className="flex-1 min-h-[44px] border-white/20 bg-white/5 hover:bg-white/10 text-white">
-          <X className="mr-2 h-4 w-4" />
-          Reset
-        </Button>
-        <Button onClick={() => handleSearch(1)} disabled={loading} className="flex-1 min-h-[44px] bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 text-white">
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-          {(t && typeof t === 'function' ? t('findCars') : null) || 'Find Cars'}
-        </Button>
-      </div>
 
       {/* Comparison Bar */}
       <ComparisonBar

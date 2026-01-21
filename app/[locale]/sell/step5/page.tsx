@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -17,30 +17,11 @@ export default function SellStep5Page() {
   const router = useRouter()
   const locale = useLocale()
   const { listingId } = useSellDraft()
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm()
+  const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const [showPhoneOnly, setShowPhoneOnly] = useState(true)
   const [preferredMethods, setPreferredMethods] = useState<string[]>([])
-  const [editPrefilled, setEditPrefilled] = useState(false)
 
-  const location = (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined')
-    ? (() => { try { return JSON.parse(sessionStorage.getItem('sell_location') || '{}') } catch { return {} as Record<string, string> } })()
-    : ({} as Record<string, string>)
-
-  useEffect(() => {
-    if (!listingId || editPrefilled || typeof sessionStorage === 'undefined') return
-    const editId = sessionStorage.getItem('edit_listing_id')
-    if (!editId) return
-    apiClient.getListing(parseInt(String(listingId), 10)).then((listing) => {
-      if (!listing) return
-      setValue('phone', listing.phone || '')
-      setValue('phone_country_code', listing.phone_country_code || '+964')
-      setValue('exact_address', listing.exact_address || '')
-      setValue('availability', listing.availability || '')
-      setShowPhoneOnly(listing.show_phone_to_buyers_only !== false)
-      setPreferredMethods(Array.isArray(listing.preferred_contact_methods) ? listing.preferred_contact_methods : [])
-      setEditPrefilled(true)
-    }).catch(() => setEditPrefilled(true))
-  }, [listingId, editPrefilled, setValue])
+  const location = JSON.parse(sessionStorage.getItem('sell_location') || '{}')
 
   const toggleMethod = (method: string) => {
     setPreferredMethods(prev =>
@@ -63,7 +44,9 @@ export default function SellStep5Page() {
           availability: contact.availability || null,
           exact_address: contact.exact_address || null,
         })
-      } catch {}
+      } catch (e) {
+        console.warn('Failed to PATCH contact to draft:', e)
+      }
     }
     router.push(`/${locale}/sell/step6`)
   }
@@ -157,9 +140,9 @@ export default function SellStep5Page() {
                 </div>
               </div>
 
-              {/* Availability (Optional) */}
+              {/* Availability */}
               <div>
-                <Label className="text-gray-300">Availability (Optional)</Label>
+                <Label className="text-gray-300">Availability</Label>
                 <Input
                   {...register('availability')}
                   className="bg-gray-700 border-gray-600 text-white mt-1"

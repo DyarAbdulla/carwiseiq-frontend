@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { apiClient, getToken, removeToken } from '@/lib/api'
 
-export interface User {
-  id: string
+interface User {
+  id: number
   email: string
 }
 
@@ -15,132 +15,168 @@ export function useAuth() {
   const pathname = usePathname()
 
   const checkAuth = useCallback(async () => {
-    if (typeof window === 'undefined') {
-      setUser(null)
-      setLoading(false)
-      return
-    }
-    if (typeof pathname === 'string' && pathname.includes('/admin/')) {
-      setLoading(false)
-      return
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (session?.user) {
-      setUser({ id: session.user.id, email: session.user.email ?? '' })
-    } else {
-      setUser(null)
-    }
-    setLoading(false)
-  }, [pathname])
-
-  useEffect(() => {
-    checkAuth()
-  }, [pathname])
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email ?? '' })
-      } else {
+    try {
+      // Check if we're in browser environment
+      if (typeof window === 'undefined') {
         setUser(null)
+        setLoading(false)
+        return
       }
-    })
-    return () => subscription.unsubscribe()
+
+      const token = getToken()
+      if (!token) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      try {
+        const userData = await apiClient.getMe()
+        // Validate userData structure
+        if (userData && typeof userData === 'object' && userData.email) {
+          setUser(userData)
+        } else {
+          throw new Error('Invalid user data received')
+        }
+      } catch (apiError: any) {
+        // Not authenticated or token expired
+        console.error('Auth check failed:', apiError?.message || apiError)
+        // Only remove token if it's an auth error (401, 403), not network errors
+        if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
+          removeToken()
+          setUser(null)
+        }
+      }
+    } catch (error) {
+      console.error('Auth check error:', error)
+      // Not authenticated or token expired
+      if (typeof window !== 'undefined') {
+        const token = getToken()
+        // Only remove if token exists but verification failed
+        if (token) {
+          removeToken()
+        }
+      }
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
+  // Check auth on mount and when pathname changes
+  useEffect(() => {
+    checkAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]) // Only re-check when route changes, checkAuth is stable
+
+  // Also check auth on window focus (user might have logged in another tab)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const onFocus = () => checkAuth()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+
+    const handleFocus = () => {
+      checkAuth()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [checkAuth])
 
-  const login = async (email: string, password: string, _rememberMe?: boolean) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    if (data.user) {
-      setUser({ id: data.user.id, email: data.user.email ?? '' })
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
+    try {
+      if (!email || !password) {
+        throw new Error('Email and password are required')
+      }
+      const response = await apiClient.login(email, password, rememberMe || false)
+      if (response && response.user && typeof response.user === 'object') {
+        setUser(response.user)
+        // apiClient.login already called setToken(access_token); no extra /auth/me here
+      }
+      return response
+    } catch (error) {
+      console.error('Login error:', error)
+      throw error
     }
-    return {
-      token: data.session?.access_token,
-      user: data.user ? { id: data.user.id, email: data.user.email ?? '' } : null,
-    }
-  }
-
-  const signInWithGoogle = async (locale: string = 'en') => {
-    const redirectTo =
-      typeof window !== 'undefined' ? `${window.location.origin}/${locale}/auth/callback` : ''
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    })
-    if (error) throw error
   }
 
   const register = async (
     email: string,
     password: string,
-    _confirmPassword: string,
+    confirmPassword: string,
     fullName?: string,
-    _termsAccepted?: boolean,
-    locale: string = 'en'
+    termsAccepted: boolean = false
   ) => {
-    const redirectTo =
-      typeof window !== 'undefined' ? `${window.location.origin}/${locale}/auth/callback` : undefined
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-        emailRedirectTo: redirectTo,
-      },
-    })
-    if (error) throw error
-    const u = data.user
-    return {
-      token: data.session?.access_token ?? null,
-      user: u ? { id: u.id, email: u.email ?? '' } : null,
+    try {
+      if (!email || !password) {
+        throw new Error('Email and password are required')
+      }
+      const response = await apiClient.register(email, password, confirmPassword, fullName, termsAccepted)
+      if (response && response.user && typeof response.user === 'object') {
+        setUser(response.user)
+        // apiClient.register already called setToken(access_token); no extra /auth/me here
+      }
+      return response
+    } catch (error) {
+      console.error('Register error:', error)
+      throw error
     }
-  }
-
-  const forgotPassword = async (email: string, locale: string = 'en') => {
-    const redirectTo =
-      typeof window !== 'undefined' ? `${window.location.origin}/${locale}/auth/callback` : undefined
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
-    if (error) throw error
-  }
-
-  const logout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
   }
 
   const verify = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (session?.user) {
-      setUser({ id: session.user.id, email: session.user.email ?? '' })
-      return true
+    try {
+      if (typeof window === 'undefined') {
+        return false
+      }
+      const response = await apiClient.verifyToken()
+      if (response && response.valid && response.user && typeof response.user === 'object') {
+        setUser(response.user)
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Verify error:', error)
+      setUser(null)
+      return false
     }
-    return false
+  }
+
+  const logout = async () => {
+    try {
+      if (typeof window !== 'undefined') {
+        await apiClient.logout()
+      }
+      // Clear user state immediately
+      setUser(null)
+      // Refresh auth state to ensure everything is cleared
+      await checkAuth()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Still clear user even if API call fails
+      setUser(null)
+      if (typeof window !== 'undefined') {
+        removeToken()
+      }
+      // Refresh auth state
+      await checkAuth()
+    }
   }
 
   return {
     user,
     loading,
     login,
-    signInWithGoogle,
     register,
-    forgotPassword,
     logout,
     checkAuth,
     verify,
     isAuthenticated: !!user,
   }
 }
+
+
+
+
+
+
+
+
+

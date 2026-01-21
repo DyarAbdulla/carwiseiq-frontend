@@ -37,8 +37,7 @@ export default function SellStep4Page() {
   const locale = useLocale()
   const { toast } = useToast()
   const { aiDetection, listingId, setCarDetails, location } = useSellDraft()
-  type Step4Form = { mileage_unit: string; make?: string; model?: string; color?: string; year?: string; description?: string; [k: string]: unknown }
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Step4Form>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       mileage_unit: 'km',
     }
@@ -99,39 +98,13 @@ export default function SellStep4Page() {
           setPrefillLoaded(true)
           return
         }
-        // Try to get from listing API (including edit mode)
+        // Try to get from listing API
         const sid = sessionStorage.getItem('sell_listing_id') || (listingId && String(listingId))
         if (sid) {
           const lid = parseInt(sid, 10)
           if (!isNaN(lid)) {
           try {
             const listing = await apiClient.getListing(lid)
-            if (listing && (listing.make || listing.model || listing.price != null)) {
-              setValue('make', listing.make || '')
-              setValue('model', listing.model || '')
-              setValue('year', listing.year != null ? String(listing.year) : '')
-              setValue('trim', listing.trim || '')
-              setValue('price', listing.price ?? '')
-              setValue('mileage', listing.mileage ?? '')
-              setValue('mileage_unit', listing.mileage_unit || 'km')
-              setValue('condition', listing.condition || '')
-              setValue('transmission', listing.transmission || '')
-              setValue('fuel_type', listing.fuel_type || '')
-              setValue('color', listing.color || '')
-              setValue('description', listing.description || '')
-              setSelectedFeatures(Array.isArray(listing.features) ? listing.features : [])
-              setAiPrefilledValues({ make: listing.make, model: listing.model, color: listing.color, year: listing.year != null ? String(listing.year) : undefined })
-              if (listing.auto_detect?.topk) {
-                setAiSuggestions({
-                  make: listing.auto_detect.topk.make || [],
-                  model: listing.auto_detect.topk.model || [],
-                  color: listing.auto_detect.topk.color || [],
-                  year: listing.auto_detect.topk.year || [],
-                })
-              }
-              setPrefillLoaded(true)
-              return
-            }
             if (listing?.prefill) {
               const prefill = listing.prefill
               if (prefill.make) setValue('make', prefill.make)
@@ -139,6 +112,7 @@ export default function SellStep4Page() {
               if (prefill.color) setValue('color', prefill.color)
               if (prefill.year) setValue('year', prefill.year.toString())
               
+              // Load AI suggestions if available
               if (listing.auto_detect) {
                 const detection = listing.auto_detect
                 setAiSuggestions({
@@ -148,6 +122,8 @@ export default function SellStep4Page() {
                   year: detection.topk?.year || [],
                 })
                 setConfidenceLevel(detection.meta?.confidence_level || 'low')
+                
+                // Track AI-prefilled values
                 setAiPrefilledValues({
                   make: prefill.make,
                   model: prefill.model,
@@ -155,6 +131,7 @@ export default function SellStep4Page() {
                   year: prefill.year?.toString()
                 })
               }
+              
               setPrefillLoaded(true)
               return
             }
@@ -220,8 +197,8 @@ export default function SellStep4Page() {
   }, [setValue, aiDetection, listingId])
 
   // Load models when make changes
-  const makeValue = watch('make')
   useEffect(() => {
+    const makeValue = watch('make')
     if (makeValue && makes.includes(makeValue)) {
       const loadModels = async () => {
         try {
@@ -235,7 +212,7 @@ export default function SellStep4Page() {
     } else {
       setModels([])
     }
-  }, [makeValue, makes])
+  }, [watch('make'), makes])
 
   // Track user overrides when they change AI-filled fields
   const handleFieldChange = async (field: 'make' | 'model' | 'color' | 'year', value: string) => {
@@ -291,6 +268,7 @@ export default function SellStep4Page() {
     }
   }
 
+  const makeValue = watch('make')
   const modelValue = watch('model')
   const yearValue = watch('year')
   const colorValue = watch('color')
@@ -509,20 +487,6 @@ export default function SellStep4Page() {
                 </div>
               </div>
 
-              {/* Fuel consumption (L/100km) - optional */}
-              <div>
-                <Label className="text-gray-300">Fuel consumption (L/100km) (Optional)</Label>
-                <Input
-                  {...register('fuel_consumption_l100km')}
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  className="bg-gray-700 border-gray-600 text-white mt-1 max-w-[200px]"
-                  placeholder="e.g. 7.5"
-                />
-                <p className="text-gray-400 text-xs mt-1">Liters per 100 km. Lower is more efficient.</p>
-              </div>
-
               {/* Condition, Transmission, Fuel Type */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -570,10 +534,10 @@ export default function SellStep4Page() {
                 </div>
               </div>
 
-              {/* Color (Optional) */}
+              {/* Color */}
               <div>
                 <div className="flex items-center space-x-2 mb-1">
-                  <Label className="text-gray-300">Color (Optional)</Label>
+                  <Label className="text-gray-300">Color *</Label>
                   {aiSuggestions.color && aiSuggestions.color.length > 0 && (
                     <Badge variant="outline" className="text-xs border-blue-500/50 text-blue-400 bg-blue-500/10">
                       <Sparkles className="h-3 w-3 mr-1" />
@@ -590,7 +554,7 @@ export default function SellStep4Page() {
                     }}
                   >
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white mt-1">
-                      <SelectValue placeholder="Select Color (optional)" />
+                      <SelectValue placeholder="Select Color" />
                     </SelectTrigger>
                     <SelectContent>
                       <div className="px-2 py-1.5 text-xs font-semibold text-blue-400">AI Suggestions</div>
@@ -607,12 +571,13 @@ export default function SellStep4Page() {
                   </Select>
                 ) : (
                   <Input
-                    {...register('color')}
+                    {...register('color', { required: 'Color is required' })}
                     className="bg-gray-700 border-gray-600 text-white mt-1"
-                    placeholder="Silver (optional)"
+                    placeholder="Silver"
                     onChange={(e) => handleFieldChange('color', e.target.value)}
                   />
                 )}
+                {errors.color && <p className="text-red-500 text-sm mt-1">{errors.color.message as string}</p>}
               </div>
 
               {/* Features */}
@@ -642,7 +607,7 @@ export default function SellStep4Page() {
                 />
                 <div className="flex justify-between mt-1">
                   <p className="text-gray-400 text-sm">Optional</p>
-                  <p className="text-gray-400 text-sm">{(description ?? '').length}/2000</p>
+                  <p className="text-gray-400 text-sm">{description.length}/2000</p>
                 </div>
               </div>
 

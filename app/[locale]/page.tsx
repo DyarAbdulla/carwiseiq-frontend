@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, memo } from 'react'
+import { useState, useEffect, useMemo, memo, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,18 +12,16 @@ import {
   CheckCircle2, ArrowRight, Star, Globe,
   TrendingUp, Brain, MapPin,
   ChevronDown, Mail, Sparkles, Gift,
-  Play, Award, TrendingDown,
-  Database, CheckCircle, Clipboard, Search, Gavel, Plus, Car, Wallet
+  Play, Award, TrendingDown
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { LearnMoreModal } from '@/components/LearnMoreModal'
 import { motion } from 'framer-motion'
-import { apiClient } from '@/lib/api'
-import { listingImageUrl } from '@/lib/utils'
+import { TypingAnimation } from '@/components/home/TypingAnimation'
 import { FloatingParticles } from '@/components/home/FloatingParticles'
 import { FloatingCar } from '@/components/home/FloatingCar'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { BackgroundVideo } from '@/components/BackgroundVideo'
 
 // TypeScript interfaces for Hero Section
 interface HeroSectionProps {
@@ -35,12 +33,116 @@ interface HeroSectionProps {
 
 // Enhanced Hero Section Component
 const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreClick }: HeroSectionProps) {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [scrollY, setScrollY] = useState(0)
+  const [reducedMotion, setReducedMotion] = useState(false)
+  const heroRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReducedMotion(mediaQuery.matches)
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setReducedMotion(e.matches)
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+
+    // Mouse parallax effect
+    const handleMouseMove = (e: MouseEvent) => {
+      if (reducedMotion) return
+      const rect = heroRef.current?.getBoundingClientRect()
+      if (rect) {
+        const x = (e.clientX - rect.left - rect.width / 2) * 0.02
+        const y = (e.clientY - rect.top - rect.height / 2) * 0.02
+        setMousePosition({ x, y })
+      }
+    }
+
+    // Scroll parallax effect
+    const handleScroll = () => {
+      if (reducedMotion) return
+      setScrollY(window.scrollY)
+    }
+
+    if (!reducedMotion) {
+      window.addEventListener('mousemove', handleMouseMove, { passive: true })
+      window.addEventListener('scroll', handleScroll, { passive: true })
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('scroll', handleScroll)
+      mediaQuery.removeEventListener('change', handleChange)
+    }
+  }, [reducedMotion, heroRef])
+
   return (
     <section
-      className="relative isolate min-h-[50vh] min-h-[50dvh] sm:min-h-[60vh] md:min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden py-8 sm:py-12 md:py-16 lg:py-24"
+      ref={heroRef}
+      className="relative isolate min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden py-12 sm:py-16 md:py-20 lg:py-32"
       aria-labelledby="hero-title"
     >
-      {/* No static car image — video background only (from BackgroundVideo at page level) */}
+      {/* Cinematic Background with car-hero-5.jpg */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Desktop background image with parallax */}
+        <div
+          className="hidden md:block absolute inset-0"
+          style={{
+            transform: reducedMotion
+              ? 'none'
+              : `translate(${mousePosition.x}px, ${mousePosition.y + scrollY * 0.15}px) scale(1.1)`,
+            transition: reducedMotion ? 'none' : 'transform 0.1s ease-out',
+          }}
+        >
+          <Image
+            src="/images/hero/car-hero-5.jpg"
+            alt=""
+            fill
+            className="object-cover object-center"
+            priority
+            quality={90}
+            sizes="100vw"
+            style={{
+              opacity: 0.25,
+              filter: 'blur(1.5px) brightness(0.85) contrast(1.2) saturate(1.0)',
+            }}
+            aria-hidden="true"
+          />
+        </div>
+        {/* Mobile background image with parallax */}
+        <div
+          className="md:hidden absolute inset-0"
+          style={{
+            transform: reducedMotion
+              ? 'none'
+              : `translateY(${Math.min(scrollY * 0.15, 25)}px)`,
+            transition: reducedMotion ? 'none' : 'transform 0.1s ease-out',
+          }}
+        >
+          <Image
+            src="/images/hero/car-hero-5.jpg"
+            alt=""
+            fill
+            className="object-cover object-center"
+            priority
+            quality={90}
+            sizes="100vw"
+            style={{
+              opacity: 0.2,
+              filter: 'blur(2px) brightness(0.85) contrast(1.2) saturate(1.0)',
+            }}
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Dark gradient overlay from top to bottom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/50"></div>
+
+        {/* Edge vignette overlay */}
+        <div className="absolute inset-0 heroVignette"></div>
+      </div>
 
       {/* Subtle Floating Light Orbs - Very Slow Animation */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
@@ -88,96 +190,132 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
         </ErrorBoundary>
       </div> */}
 
-      {/* Content: mobile-first, max 2-line headline, one value sentence, 3 trust badges, 1 CTA + text link */}
-      <div className="relative z-10 container w-full max-w-[100%]">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 sm:gap-6 text-center px-4 sm:px-6 lg:px-8">
-          <div className="relative mx-auto w-full max-w-2xl">
+      {/* Content Container with Glass Card */}
+      <div className="relative z-10 container w-full">
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-6 md:gap-8 text-center px-4 sm:px-6 lg:px-8">
+          {/* Premium Glass Card with Glow and Gradient Border */}
+          <div className="relative mx-auto w-[95%] max-w-2xl sm:max-w-3xl">
+            {/* Soft glow behind card (indigo-500/10 blur-3xl) */}
+            <div
+              aria-hidden="true"
+              className="absolute -inset-6 -z-10 rounded-[32px] blur-3xl"
+              style={{
+                background: "radial-gradient(circle at 50% 40%, rgba(99,102,241,0.10), transparent 60%)",
+              }}
+            />
+            {/* Gradient border wrapper with pulse animation */}
             <motion.div
-              className="rounded-2xl glassBorder hero-card-border"
+              className="rounded-2xl sm:rounded-3xl glassBorder hero-card-border"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
+              transition={{ duration: 1, delay: 0.5 }}
             >
-              <div className="rounded-2xl glassCard px-4 py-5 sm:px-6 sm:py-8">
-                {/* Headline — max 2 lines */}
+              {/* Glass card inner */}
+              <div className="rounded-2xl sm:rounded-3xl glassCard px-5 py-6 sm:px-8 sm:py-10">
+                {/* Hero Heading - Pure White */}
                 <motion.h1
                   id="hero-title"
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className="text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight text-white text-center line-clamp-2"
-                  style={{ textShadow: '0 2px 12px rgba(0,0,0,0.3)' }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  className="text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white"
+                  style={{ textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}
                 >
-                  {t('smartestWay')}
+                  {t('title') || 'Car Price Predictor Pro'}
                 </motion.h1>
-                {/* One value sentence only */}
-                <motion.p
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-                  className="mt-2 sm:mt-3 max-w-[320px] sm:max-w-md mx-auto text-sm sm:text-base text-slate-200/95"
-                >
-                  {t('heroSubheadline')}
-                </motion.p>
-                {/* 3 trust badges in one row: Accuracy % | Cars analyzed | Prediction speed */}
+
+                {/* Subtitle with Typing Animation */}
                 <motion.div
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-                  className="flex flex-nowrap items-center justify-center gap-3 sm:gap-5 mt-4"
-                  role="list"
-                  aria-label="Trust"
+                  transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+                  className="mt-4 max-w-[280px] sm:max-w-md mx-auto text-xs sm:text-sm lg:text-base min-h-[2rem] sm:min-h-[2.5rem] flex items-center justify-center text-slate-200/95 leading-relaxed"
                 >
-                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs shrink-0" role="listitem">
-                    <Award className="w-4 h-4 text-[#5B7FFF]" aria-hidden="true" />
+                  <ErrorBoundary>
+                    <TypingAnimation
+                      text={t('description') || 'Get accurate car price estimates using advanced machine learning'}
+                      speed={30}
+                      className="font-light"
+                    />
+                  </ErrorBoundary>
+                </motion.div>
+
+                {/* Key Stats Row */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+                  className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-2"
+                  role="list"
+                  aria-label="Key statistics"
+                >
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs lg:text-sm" role="listitem">
+                    <Award className="w-4 h-4 sm:w-5 sm:h-5 text-[#5B7FFF]" aria-hidden="true" />
                     <span className="text-white font-semibold">99.96%</span>
-                    <span className="text-slate-400">Accuracy</span>
+                    <span className="text-[#94a3b8]">Accuracy</span>
                   </div>
-                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" aria-hidden="true" />
-                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs shrink-0" role="listitem">
-                    <TrendingDown className="w-4 h-4 text-green-400" aria-hidden="true" />
-                    <span className="text-white font-semibold">60K+</span>
-                    <span className="text-slate-400">Cars</span>
-                  </div>
-                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" aria-hidden="true" />
-                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs shrink-0" role="listitem">
-                    <Zap className="w-4 h-4 text-purple-400" aria-hidden="true" />
+                  <div className="hidden sm:block w-1 h-1 rounded-full bg-[#5B7FFF]/50" aria-hidden="true" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs lg:text-sm" role="listitem">
+                    <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" aria-hidden="true" />
                     <span className="text-white font-semibold">&lt;1s</span>
-                    <span className="text-slate-400">Speed</span>
+                    <span className="text-[#94a3b8]">Predictions</span>
+                  </div>
+                  <div className="hidden sm:block w-1 h-1 rounded-full bg-[#5B7FFF]/50" aria-hidden="true" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs lg:text-sm" role="listitem">
+                    <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" aria-hidden="true" />
+                    <span className="text-white font-semibold">60K+</span>
+                    <span className="text-[#94a3b8]">Cars Analyzed</span>
                   </div>
                 </motion.div>
-                {/* ONE main CTA: Get Price Now. Secondary: text link only */}
+
+                {/* CTA Buttons with Enhanced Animations */}
                 <motion.div
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
-                  className="mt-5 sm:mt-6 flex flex-col items-center gap-3"
+                  transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
+                  className="mt-7 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-center"
                 >
                   <Link
                     href={`/${locale}/predict`}
-                    aria-label="Get price now"
-                    className="w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-xl"
+                    aria-label="Get started with predictions"
+                    className="focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-lg w-full sm:w-auto"
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                    >
+                      <Button
+                        size="lg"
+                        className="bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 px-5 min-h-[44px] py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold w-full sm:w-auto"
+                      >
+                        <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" aria-hidden="true" />
+                        {tCommon('getStarted') || 'Get Started'}
+                      </Button>
+                    </motion.div>
+                  </Link>
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                    className="w-full sm:w-auto"
                   >
                     <Button
+                      variant="outline"
                       size="lg"
-                      className="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/20 min-h-[44px] px-6 py-3 text-base font-semibold"
+                      className="bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all duration-300 px-5 min-h-[44px] py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      onClick={onLearnMoreClick}
+                      aria-label="Learn more about the application"
                     >
-                      <Play className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden="true" />
-                      {tCommon('getPriceNow') || tCommon('getStarted') || 'Get Price Now'}
+                      {tCommon('learnMore') || 'Learn More'}
                     </Button>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={onLearnMoreClick}
-                    className="text-sm font-medium text-slate-300 hover:text-white underline underline-offset-2 transition-colors"
-                    aria-label="Learn more"
-                  >
-                    {tCommon('learnMore') || 'Learn More'}
-                  </button>
+                  </motion.div>
                 </motion.div>
+
               </div>
             </motion.div>
           </div>
+          {/* End Glass Card */}
         </div>
       </div>
 
@@ -214,28 +352,44 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
 })
 
 // Memoized components for performance
-const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string) => string }) {
+const HowItWorksSection = memo(function HowItWorksSection({ t, locale }: { t: any, locale: string }) {
   const steps = [
-    { icon: Clipboard, title: t('howItWorks.step1.title'), description: t('howItWorks.step1.description') },
-    { icon: Search, title: t('howItWorks.step2.title'), description: t('howItWorks.step2.description') },
-    { icon: Gavel, title: t('howItWorks.step3.title'), description: t('howItWorks.step3.description') },
+    {
+      icon: Target,
+      title: t('howItWorks.step1.title'),
+      description: t('howItWorks.step1.description')
+    },
+    {
+      icon: Brain,
+      title: t('howItWorks.step2.title'),
+      description: t('howItWorks.step2.description')
+    },
+    {
+      icon: Zap,
+      title: t('howItWorks.step3.title'),
+      description: t('howItWorks.step3.description')
+    },
   ]
 
   return (
-    <section className="relative z-10 w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="how-it-works-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
-        <motion.h2
-          id="how-it-works-title"
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="how-it-works-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-10 lg:mb-12 text-white tracking-tight"
+          className="text-center mb-12"
         >
-          {t('howItWorks.title')}
-        </motion.h2>
+          <h2 id="how-it-works-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+            {t('howItWorks.title')}
+          </h2>
+          <p className="text-sm sm:text-base text-[#94a3b8] max-w-2xl mx-auto">
+            {t('howItWorks.subtitle')}
+          </p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
             return (
@@ -247,16 +401,23 @@ const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="relative"
               >
-                <div className="h-full rounded-2xl border border-white/10 max-md:border-white/20 bg-white/5 backdrop-blur-xl hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 p-6 sm:p-8 flex flex-col items-center text-center">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-white/10 max-md:border-white/20 flex items-center justify-center mb-4">
-                    <Icon className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-400" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">{step.title}</h3>
-                  <p className="text-sm text-slate-300/90">{step.description}</p>
-                </div>
+                <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300 h-full">
+                  <CardHeader className="text-center">
+                    <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-[#5B7FFF] to-purple-600 flex items-center justify-center">
+                      <Icon className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <Badge className="bg-[#5B7FFF] text-white">Step {index + 1}</Badge>
+                    </div>
+                    <CardTitle className="text-xl font-bold mt-4">{step.title}</CardTitle>
+                    <CardDescription className="text-[#94a3b8] mt-2">
+                      {step.description}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 rtl:right-auto rtl:-left-3 -translate-y-1/2 z-10">
-                    <ArrowRight className="h-5 w-5 text-indigo-400/70 rtl:rotate-180" />
+                  <div className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 z-10">
+                    <ArrowRight className="h-6 w-6 text-[#5B7FFF]" />
                   </div>
                 )}
               </motion.div>
@@ -277,8 +438,8 @@ const ValuePropositionSection = memo(function ValuePropositionSection({ t, local
   ]
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="value-prop-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="value-prop-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -286,7 +447,7 @@ const ValuePropositionSection = memo(function ValuePropositionSection({ t, local
           transition={{ duration: 0.6 }}
           className="text-center max-w-4xl mx-auto"
         >
-          <h2 id="value-prop-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="value-prop-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('valueProposition.subtitle')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8] mb-8">
@@ -303,7 +464,7 @@ const ValuePropositionSection = memo(function ValuePropositionSection({ t, local
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="flex flex-col items-center p-4 bg-white/[0.03] backdrop-blur-xl rounded-lg border border-white/10 max-md:border-white/20 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                  className="flex flex-col items-center p-4 bg-white/[0.03] backdrop-blur-xl rounded-lg border border-white/10 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
                 >
                   <Icon className="h-8 w-8 text-[#5B7FFF] mb-2" />
                   <span className="text-sm text-center text-[#e2e8f0]">{feature.text}</span>
@@ -340,16 +501,16 @@ const SocialProofSection = memo(function SocialProofSection({ t, locale }: { t: 
   ]
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="social-proof-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="social-proof-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-10 lg:mb-12"
+          className="text-center mb-12"
         >
-          <h2 id="social-proof-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="social-proof-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('socialProof.title')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8]">
@@ -366,7 +527,7 @@ const SocialProofSection = memo(function SocialProofSection({ t, locale }: { t: 
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300 h-full">
+              <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300 h-full">
                 <CardHeader>
                   <div className="flex items-center gap-1 mb-2">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
@@ -374,7 +535,7 @@ const SocialProofSection = memo(function SocialProofSection({ t, locale }: { t: 
                     ))}
                   </div>
                   <CardDescription className="text-[#94a3b8] italic">
-                    &quot;{testimonial.text}&quot;
+                    "{testimonial.text}"
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -406,8 +567,8 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
   ]
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="regional-intel-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="regional-intel-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 items-center max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -418,7 +579,7 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
             <Badge className="mb-4 bg-purple-600/20 text-purple-400 border-purple-600/50 text-xs sm:text-sm">
               {t('regionalIntelligence.subtitle')}
             </Badge>
-            <h2 id="regional-intel-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+            <h2 id="regional-intel-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
               {t('regionalIntelligence.title')}
             </h2>
             <p className="text-sm sm:text-base text-[#94a3b8] mb-8">
@@ -434,7 +595,7 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className="flex items-center gap-3 p-4 bg-white/[0.03] backdrop-blur-xl rounded-lg border border-white/10 max-md:border-white/20 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/10 transition-all duration-300"
+                    className="flex items-center gap-3 p-4 bg-white/[0.03] backdrop-blur-xl rounded-lg border border-white/10 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/10 transition-all duration-300"
                   >
                     <Icon className="h-6 w-6 text-purple-400" />
                     <span className="text-sm text-[#e2e8f0]">{feature.text}</span>
@@ -450,7 +611,7 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl p-6 md:p-8 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
+            <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-purple-600/10 rounded-lg">
                   <span className="text-[#94a3b8]">Market Coverage</span>
@@ -473,42 +634,10 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
   )
 })
 
-// Popular Brands quick-links — scroll to predict CTA
-const PopularBrandsSection = memo(function PopularBrandsSection({ t }: { t: (k: string) => string }) {
-  const brands = ['Toyota', 'Hyundai', 'Kia', 'Nissan', 'BMW']
-
-  const scrollToForm = () => {
-    const el = document.getElementById('predict-cta')
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-
-  return (
-    <section className="relative z-10 w-full py-8 sm:py-10" aria-label={t('popularBrandsLabel')}>
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl">
-        <p className="text-center text-sm text-slate-400 mb-4">{t('popularBrandsLabel')}</p>
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          {brands.map((brand) => (
-            <motion.button
-              key={brand}
-              type="button"
-              onClick={scrollToForm}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium text-slate-200 bg-white/5 border border-white/10 max-md:border-white/20 hover:bg-white/10 hover:border-white/20 hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
-            >
-              {brand}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-})
-
 const InteractiveDemoSection = memo(function InteractiveDemoSection({ t, locale }: { t: any, locale: string }) {
   return (
-    <section id="predict-cta" className="relative z-10 w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="demo-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="demo-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -516,7 +645,7 @@ const InteractiveDemoSection = memo(function InteractiveDemoSection({ t, locale 
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto"
         >
-          <h2 id="demo-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="demo-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('interactiveDemo.title')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8] mb-4">
@@ -564,16 +693,16 @@ const ComparisonSection = memo(function ComparisonSection({ t, locale }: { t: an
   ]
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="comparison-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="comparison-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-10 lg:mb-12"
+          className="text-center mb-12"
         >
-          <h2 id="comparison-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="comparison-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('comparison.title')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8]">
@@ -582,7 +711,7 @@ const ComparisonSection = memo(function ComparisonSection({ t, locale }: { t: an
         </motion.div>
 
         <div className="max-w-4xl mx-auto">
-          <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl overflow-visible">
+          <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -658,16 +787,16 @@ const FAQSection = memo(function FAQSection({ t, locale }: { t: any, locale: str
   }
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="faq-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="faq-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-10 lg:mb-12"
+          className="text-center mb-12"
         >
-          <h2 id="faq-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="faq-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('faq.title')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8]">
@@ -687,10 +816,10 @@ const FAQSection = memo(function FAQSection({ t, locale }: { t: any, locale: str
                 transition={{ duration: 0.4, delay: index * 0.1 }}
               >
                 <Collapsible open={isOpen} onOpenChange={() => toggleItem(faq.q)}>
-                  <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
+                  <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
                     <CollapsibleTrigger className="w-full" aria-expanded={isOpen}>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-start text-white font-semibold pe-4">
+                        <CardTitle className="text-left text-white font-semibold pr-4">
                           {faq.question}
                         </CardTitle>
                         <ChevronDown
@@ -729,8 +858,8 @@ const NewsletterSection = memo(function NewsletterSection({ t, locale }: { t: an
   }
 
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="newsletter-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+    <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="newsletter-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -739,7 +868,7 @@ const NewsletterSection = memo(function NewsletterSection({ t, locale }: { t: an
           className="max-w-2xl mx-auto text-center"
         >
           <Mail className="h-10 w-10 sm:h-12 sm:w-12 text-[#5B7FFF] mx-auto mb-4" />
-          <h2 id="newsletter-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="newsletter-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('newsletter.title')}
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8] mb-2">
@@ -778,8 +907,8 @@ const NewsletterSection = memo(function NewsletterSection({ t, locale }: { t: an
 
 const FinalCTASection = memo(function FinalCTASection({ t, locale }: { t: any, locale: string }) {
   return (
-    <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24 relative overflow-hidden" aria-labelledby="final-cta-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl relative z-10">
+    <section className="w-full py-12 sm:py-16 lg:py-24 relative overflow-hidden" aria-labelledby="final-cta-title">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -787,7 +916,7 @@ const FinalCTASection = memo(function FinalCTASection({ t, locale }: { t: any, l
           transition={{ duration: 0.6 }}
           className="max-w-3xl mx-auto text-center"
         >
-          <h2 id="final-cta-title" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
+          <h2 id="final-cta-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
             {t('finalCta.title')}
           </h2>
           <p className="text-base sm:text-lg text-white/90 mb-2">
@@ -822,185 +951,6 @@ const FinalCTASection = memo(function FinalCTASection({ t, locale }: { t: any, l
   )
 })
 
-// --- Mobile-first home sections (order: Predict, Sell, Budget, Best Deals, Compare, Stats) ---
-
-const PredictShortcutSection = memo(function PredictShortcutSection({ t, locale }: { t: (k: string) => string; locale: string }) {
-  return (
-    <section className="w-full py-6 sm:py-8" aria-labelledby="predict-shortcut">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <Link href={`/${locale}/predict`} className="block">
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-                <Play className="h-6 w-6 text-indigo-400" />
-              </div>
-              <div>
-                <h2 id="predict-shortcut" className="text-lg font-bold text-white">{t('nav.predict')}</h2>
-                <p className="text-sm text-slate-400">{t('nav.predictSubtitle')}</p>
-              </div>
-            </div>
-            <ArrowRight className="h-5 w-5 text-slate-400 shrink-0 rtl:rotate-180" />
-          </motion.div>
-        </Link>
-      </div>
-    </section>
-  )
-})
-
-const SellCtaSection = memo(function SellCtaSection({ t, locale }: { t: (k: string) => string; locale: string }) {
-  return (
-    <section className="w-full py-6 sm:py-8" aria-labelledby="sell-cta">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <Link href={`/${locale}/sell/step1`} className="block">
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/30 flex items-center justify-center shrink-0">
-                <Plus className="h-6 w-6 text-indigo-300" />
-              </div>
-              <h2 id="sell-cta" className="text-lg font-bold text-white">{t('nav.sellCar')}</h2>
-            </div>
-            <ArrowRight className="h-5 w-5 text-slate-400 shrink-0 rtl:rotate-180" />
-          </motion.div>
-        </Link>
-      </div>
-    </section>
-  )
-})
-
-const BUDGET_CHIPS = [
-  { label: 'Under $5k', range: '0-5000' },
-  { label: '$5k–$10k', range: '5000-10000' },
-  { label: '$10k–$20k', range: '10000-20000' },
-  { label: '$20k–$30k', range: '20000-30000' },
-  { label: '$30k–$50k', range: '30000-50000' },
-  { label: '$50k+', range: '50000-200000' },
-]
-
-const BudgetChipsSection = memo(function BudgetChipsSection({ t, locale }: { t: (k: string) => string; locale: string }) {
-  return (
-    <section className="w-full py-6 sm:py-8" aria-labelledby="budget-chips">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <h2 id="budget-chips" className="text-lg font-bold text-white mb-4">{t('nav.budget')}</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {BUDGET_CHIPS.map((chip) => (
-            <Link
-              key={chip.range}
-              href={`/${locale}/budget`}
-              className="shrink-0 min-h-[44px] px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-slate-200 hover:bg-white/10 hover:border-white/20 transition-colors flex items-center gap-2"
-            >
-              <Wallet className="h-4 w-4 text-indigo-400" />
-              {chip.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-})
-
-const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: string) => string; locale: string }) {
-  const [deals, setDeals] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    apiClient.searchListings({ page_size: 6 }).then((r: any) => setDeals(r?.items || [])).catch(() => {}).finally(() => setLoading(false))
-  }, [])
-  return (
-    <section className="w-full py-6 sm:py-8" aria-labelledby="best-deals">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 id="best-deals" className="text-lg font-bold text-white">{t('bestDeals')}</h2>
-          <Link href={`/${locale}/buy-sell`} className="text-sm font-medium text-indigo-400 hover:text-indigo-300">{t('viewAll')}</Link>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {loading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="car-card-image-wrap shrink-0 w-[260px] h-[180px] rounded-2xl" />
-              ))
-            : deals.length === 0
-              ? (
-                <Link href={`/${locale}/buy-sell`} className="shrink-0 w-[260px] rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col items-center justify-center gap-2 min-h-[160px]">
-                  <Car className="h-10 w-10 text-slate-500" />
-                  <span className="text-sm text-slate-400">Browse listings</span>
-                </Link>
-              )
-              : deals.map((d: any) => (
-                <Link key={d.id} href={`/${locale}/buy-sell/${d.id}`} className="shrink-0 w-[260px] rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-                  <div className="aspect-[16/10] car-card-image-wrap bg-slate-800/50 relative">
-                    {(d.cover_thumbnail_url || d.cover_image) ? (
-                      <img src={listingImageUrl(d.cover_thumbnail_url || d.cover_image)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                    ) : <Car className="absolute inset-0 m-auto h-12 w-12 text-slate-600" />}
-                  </div>
-                  <div className="p-3">
-                    <p className="font-bold text-white truncate">{d.year} {d.make} {d.model}</p>
-                    <p className="text-lg font-bold text-indigo-400">${d.price?.toLocaleString()}</p>
-                  </div>
-                </Link>
-              ))}
-        </div>
-      </div>
-    </section>
-  )
-})
-
-const CompareShortcutSection = memo(function CompareShortcutSection({ t, locale }: { t: (k: string) => string; locale: string }) {
-  return (
-    <section className="w-full py-6 sm:py-8" aria-labelledby="compare-shortcut">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <Link href={`/${locale}/compare`} className="block">
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
-                <BarChart3 className="h-6 w-6 text-purple-400" />
-              </div>
-              <h2 id="compare-shortcut" className="text-lg font-bold text-white">{t('nav.compare')}</h2>
-            </div>
-            <ArrowRight className="h-5 w-5 text-slate-400 shrink-0 rtl:rotate-180" />
-          </motion.div>
-        </Link>
-      </div>
-    </section>
-  )
-})
-
-const StatsTrustSection = memo(function StatsTrustSection({ t }: { t: (k: string) => string }) {
-  return (
-    <section className="w-full py-8 sm:py-10" aria-labelledby="stats-trust">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
-        <h2 id="stats-trust" className="sr-only">Trust &amp; stats</h2>
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-[#5B7FFF]" />
-            <span className="text-white font-bold">99.96%</span>
-            <span className="text-slate-400">Accuracy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5 text-green-400" />
-            <span className="text-white font-bold">60K+</span>
-            <span className="text-slate-400">{t('analyzedCount')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-purple-400" />
-            <span className="text-white font-bold">&lt;1s</span>
-            <span className="text-slate-400">Speed</span>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-})
-
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const [learnMoreOpen, setLearnMoreOpen] = useState(false)
@@ -1029,51 +979,187 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary>
-      {/* Transparent so video background (BackgroundVideo) shows through; no static images */}
-      <div className="relative min-h-screen min-h-[100dvh] bg-transparent">
-        {/* Background video: fixed, behind content, Home only — unmounts on nav to /predict, etc. */}
-        <BackgroundVideo />
-        {/* Two subtle fixed radial glows (indigo/violet at ~10% opacity, blur-3xl) - Home only; unmounts on nav */}
-        <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
+      {/* Global Page Background - Very Dark Ink with Subtle Glows */}
+      <main className="relative min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900">
+        {/* Two subtle fixed radial glows (indigo/violet at ~10% opacity, blur-3xl) */}
+        <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
           <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="relative z-10 flex flex-col">
-          {/* 1. Hero */}
+        <div className="relative flex flex-col">
+          {/* Enhanced Hero Section */}
           <HeroSection
             t={t}
             locale={locale}
             tCommon={tCommon}
             onLearnMoreClick={() => {
-              try { setLearnMoreOpen(true) } catch (e) { console.error(e) }
+              try {
+                setLearnMoreOpen(true)
+              } catch (error) {
+                console.error('Error opening learn more modal:', error)
+              }
             }}
           />
 
-          {/* 2. Predict Car Price (entry shortcut) */}
-          <PredictShortcutSection t={t} locale={locale} />
+          {/* Features Section with Glassmorphism */}
+          <section className="w-full py-12 sm:py-16 lg:py-24" aria-labelledby="features-title">
+            <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl">
+              <motion.h2
+                id="features-title"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-12 text-white"
+              >
+                Key Features
+              </motion.h2>
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                variants={{
+                  visible: {
+                    transition: { staggerChildren: 0.15 }
+                  }
+                }}
+                className="mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-start gap-4 sm:gap-6 max-w-7xl"
+              >
+                {/* AI Accuracy Card */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: { opacity: 1, y: 0 }
+                  }}
+                  whileHover={{ y: -12, scale: 1.02 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="group"
+                >
+                  <Card className="relative border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:shadow-2xl hover:shadow-[#5B7FFF]/20 transition-all duration-300 cursor-pointer overflow-hidden">
+                    {/* Glowing border effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#5B7FFF]/20 via-purple-500/20 to-[#5B7FFF]/20 blur-xl"></div>
+                    </div>
+                    <CardHeader className="relative z-10">
+                      <Target className="mb-4 h-10 w-10 text-[#5B7FFF] group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
+                      <CardTitle className="text-xl font-bold">{t('features.accuracy.title')}</CardTitle>
+                      <CardDescription className="text-[#94a3b8] text-base mt-2">
+                        <span className="text-2xl font-bold text-[#5B7FFF]">99.96%</span>
+                        <br />
+                        {t('features.accuracy.description')}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
 
-          {/* 3. Sell Car (CTA card) */}
-          <SellCtaSection t={t} locale={locale} />
+                {/* Fast Predictions Card */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: { opacity: 1, y: 0 }
+                  }}
+                  whileHover={{ y: -12, scale: 1.02 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="group"
+                >
+                  <Card className="relative border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-[#5B7FFF]/20 to-purple-500/20 blur-xl"></div>
+                    </div>
+                    <CardHeader className="relative z-10">
+                      <Zap className="mb-4 h-10 w-10 text-purple-400 group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
+                      <CardTitle className="text-xl font-bold">{t('features.single.title')}</CardTitle>
+                      <CardDescription className="text-[#94a3b8] text-base mt-2">
+                        <span className="text-2xl font-bold text-purple-400">&lt; 1 second</span>
+                        <br />
+                        {t('features.single.description')}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
 
-          {/* 4. Budget Finder (chips) */}
-          <BudgetChipsSection t={t} locale={locale} />
+                {/* Secure & Private Card */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: { opacity: 1, y: 0 }
+                  }}
+                  whileHover={{ y: -12, scale: 1.02 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="group"
+                >
+                  <Card className="relative border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:shadow-2xl hover:shadow-[#5B7FFF]/20 transition-all duration-300 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#5B7FFF]/20 via-blue-500/20 to-[#5B7FFF]/20 blur-xl"></div>
+                    </div>
+                    <CardHeader className="relative z-10">
+                      <Shield className="mb-4 h-10 w-10 text-[#5B7FFF] group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
+                      <CardTitle className="text-xl font-bold">Secure & Private</CardTitle>
+                      <CardDescription className="text-[#94a3b8] text-base mt-2">
+                        Your data is encrypted and never shared. Enterprise-grade security
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
 
-          {/* 5. Best Deals (horizontal scroll cards) */}
-          <BestDealsSection t={t} locale={locale} />
+                {/* Multi-car Comparison Card */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: { opacity: 1, y: 0 }
+                  }}
+                  whileHover={{ y: -12, scale: 1.02 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="group"
+                >
+                  <Card className="relative border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.05] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 blur-xl"></div>
+                    </div>
+                    <CardHeader className="relative z-10">
+                      <BarChart3 className="mb-4 h-10 w-10 text-purple-400 group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
+                      <CardTitle className="text-xl font-bold">{t('features.compare.title')}</CardTitle>
+                      <CardDescription className="text-[#94a3b8] text-base mt-2">
+                        {t('features.compare.description')}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </div>
+          </section>
 
-          {/* 6. Compare Cars */}
-          <CompareShortcutSection t={t} locale={locale} />
+          {/* Value Proposition Section */}
+          <ValuePropositionSection {...translations} />
 
-          {/* 7. Stats / Trust */}
-          <StatsTrustSection t={t} />
+          {/* How It Works Section */}
+          <HowItWorksSection {...translations} />
 
-          {/* Learn More Modal — Footer is in layout */}
+          {/* Regional Intelligence Section */}
+          <RegionalIntelligenceSection {...translations} />
+
+          {/* Interactive Demo Section */}
+          <InteractiveDemoSection {...translations} />
+
+          {/* Comparison Section */}
+          <ComparisonSection {...translations} />
+
+          {/* FAQ Section */}
+          <FAQSection {...translations} />
+
+          {/* Newsletter Section */}
+          <NewsletterSection {...translations} />
+
+          {/* Final CTA Section */}
+          <FinalCTASection {...translations} />
+
+          {/* Learn More Modal */}
           <ErrorBoundary>
             <LearnMoreModal open={learnMoreOpen} onOpenChange={setLearnMoreOpen} />
           </ErrorBoundary>
         </div>
-      </div>
+      </main>
     </ErrorBoundary>
   )
 }

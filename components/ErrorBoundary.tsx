@@ -9,8 +9,6 @@ import Link from 'next/link'
 interface Props {
   children: ReactNode
   fallback?: ReactNode
-  /** Locale-aware home path, e.g. `/en`. Falls back to `/` (middleware redirects to default locale). */
-  homeHref?: string
 }
 
 interface State {
@@ -95,7 +93,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Try again
                 </Button>
-                <Link href={this.props.homeHref || '/'}>
+                <Link href="/">
                   <Button variant="outline" className="border-[#2a2d3a]">
                     <Home className="mr-2 h-4 w-4" />
                     Go home

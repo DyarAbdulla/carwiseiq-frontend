@@ -45,7 +45,7 @@ export default function FAQPage() {
                   How do I contact a seller?
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
-                  Click &quot;Send Message&quot; on any listing to start a conversation. You can also call them directly if they&apos;ve provided a phone number. Always meet in public places and verify the vehicle before payment.
+                  Click "Send Message" on any listing to start a conversation. You can also call them directly if they've provided a phone number. Always meet in public places and verify the vehicle before payment.
                 </AccordionContent>
               </AccordionItem>
 
@@ -63,7 +63,7 @@ export default function FAQPage() {
                   How do I compare multiple cars?
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
-                  Click the &quot;Compare&quot; button on up to 3 listings, then click &quot;Compare&quot; in the comparison bar at the bottom. You&apos;ll see a side-by-side comparison with all specs, features, and price differences.
+                  Click the "Compare" button on up to 3 listings, then click "Compare" in the comparison bar at the bottom. You'll see a side-by-side comparison with all specs, features, and price differences.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

@@ -3,34 +3,29 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import PWARegister from '@/components/PWARegister'
 import InstallPrompt from '@/components/InstallPrompt'
-import { ThemeProvider } from '@/context/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002'),
-  title: 'CarWiseIQ - AI-Powered Car Pricing',
-  description: 'AI-powered car pricing with advanced machine learning',
+  title: 'Car Price Predictor Pro',
+  description: 'AI-powered car price prediction with advanced machine learning',
   manifest: '/manifest.json',
-  applicationName: 'CarWiseIQ',
+  applicationName: 'Car Price Predictor Pro',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'CarWiseIQ',
+    title: 'CarPrice',
   },
   icons: {
     icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/icon.svg',
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
   },
 }
@@ -39,11 +34,8 @@ export const viewport: Viewport = {
   themeColor: '#6366f1',
   width: 'device-width',
   initialScale: 1,
-  minimumScale: 1,
   maximumScale: 5,
   userScalable: true,
-  viewportFit: 'cover',
-  interactiveWidget: 'overlays-content',
 }
 
 export default function RootLayout({
@@ -52,8 +44,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} bg-slate-50 text-slate-900 dark:text-slate-50 antialiased`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen bg-[#0f1117] text-white`} suppressHydrationWarning>
         {/* Android PWA meta tag - added via script to avoid hydration issues */}
         <script
           dangerouslySetInnerHTML={{
@@ -70,11 +62,9 @@ export default function RootLayout({
             `,
           }}
         />
-        <ThemeProvider>
-          <PWARegister />
-          <InstallPrompt />
-          {children}
-        </ThemeProvider>
+        <PWARegister />
+        <InstallPrompt />
+        {children}
       </body>
     </html>
   )

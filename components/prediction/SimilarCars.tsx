@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { formatCurrency, formatNumber } from '@/lib/utils'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import type { SimilarCar } from '@/lib/types'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
@@ -17,6 +17,17 @@ interface SimilarCarsProps {
 export function SimilarCars({ cars }: SimilarCarsProps) {
   const [isOpen, setIsOpen] = useState(true)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt: string } | null>(null)
+
+  // Generate placeholder link for a car
+  const generateCarLink = (car: SimilarCar, index: number): string => {
+    const make = car.make || 'car'
+    const model = car.model || 'model'
+    const year = car.year || 2024
+    // Clean make and model for URL (remove spaces, special chars)
+    const cleanMake = make.toLowerCase().replace(/[^a-z0-9]/g, '-')
+    const cleanModel = model.toLowerCase().replace(/[^a-z0-9]/g, '-')
+    return `https://example-carmarket.com/listing/${year}-${cleanMake}-${cleanModel}-${index}`
+  }
 
   return (
     <Card className="border-[#2a2d3a] bg-[#1a1d29]">
@@ -42,6 +53,7 @@ export function SimilarCars({ cars }: SimilarCarsProps) {
                     <TableHead className="text-[#94a3b8]">Mileage (km)</TableHead>
                     <TableHead className="text-[#94a3b8]">Condition</TableHead>
                     <TableHead className="text-[#94a3b8]">Price ($)</TableHead>
+                    <TableHead className="text-[#94a3b8]">Link</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -96,6 +108,12 @@ export function SimilarCars({ cars }: SimilarCarsProps) {
                                       target.style.display = 'none'
                                     }}
                                   />
+                                  {/* Hover overlay indicator */}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white text-xs font-medium bg-black/60 px-2 py-1 rounded">
+                                      Click to zoom
+                                    </div>
+                                  </div>
                                 </div>
                               )
                             } else {
@@ -113,11 +131,34 @@ export function SimilarCars({ cars }: SimilarCarsProps) {
                         <TableCell className="font-semibold text-[#5B7FFF] whitespace-nowrap">
                           {formatCurrency(car.price)}
                         </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {car.link ? (
+                            <a
+                              href={car.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-400 hover:underline flex items-center gap-1 transition-colors duration-200 text-sm"
+                            >
+                              View Listing
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          ) : (
+                            <a
+                              href={generateCarLink(car, index)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-400 hover:underline flex items-center gap-1 transition-colors duration-200 text-sm"
+                            >
+                              View Listing
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-[#94a3b8] py-8">
+                      <TableCell colSpan={6} className="text-center text-[#94a3b8] py-8">
                         No similar cars found in the dataset
                       </TableCell>
                     </TableRow>

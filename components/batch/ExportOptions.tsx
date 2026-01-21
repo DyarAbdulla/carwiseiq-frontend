@@ -87,7 +87,7 @@ export function ExportOptions({ results, statsDashboardRef }: ExportOptionsProps
       if (statsDashboardRef?.current) {
         try {
           const canvas = await html2canvas(statsDashboardRef.current, {
-            background: '#0f1117',
+            backgroundColor: '#0f1117',
           })
           const imgData = canvas.toDataURL('image/png')
           const imgWidth = pageWidth - 40

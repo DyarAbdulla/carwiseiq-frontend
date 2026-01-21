@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -29,7 +29,16 @@ export default function PrivacySettingsPage() {
     privacy_allow_ai_training: false
   })
 
-  const loadSettings = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadSettings()
+  }, [user, authLoading])
+
+  const loadSettings = async () => {
     try {
       // For now, use defaults. In a real app, you'd fetch from API
       // const data = await apiClient.getPrivacySettings()
@@ -43,16 +52,7 @@ export default function PrivacySettingsPage() {
       })
       setLoading(false)
     }
-  }, [toast])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!user) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadSettings()
-  }, [user, authLoading, loadSettings, router, locale])
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -161,8 +161,8 @@ export default function PrivacySettingsPage() {
               <Label htmlFor="location-precision" className="text-white">Location Precision</Label>
               <Select
                 value={settings.privacy_location_precision}
-                onValueChange={(value: string) =>
-                  setSettings({ ...settings, privacy_location_precision: value as 'exact' | 'city' })
+                onValueChange={(value: 'exact' | 'city') =>
+                  setSettings({ ...settings, privacy_location_precision: value })
                 }
               >
                 <SelectTrigger id="location-precision" className="border-[#2a2d3a] bg-[#0f1117] text-white">

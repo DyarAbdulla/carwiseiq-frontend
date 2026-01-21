@@ -46,10 +46,9 @@ export function AnimatedPriceReveal({ price, className }: AnimatedPriceRevealPro
       className={className}
     >
       <motion.div
-        animate={isAnimating ? { scale: [1, 1.02, 1] } : {}}
+        animate={isAnimating ? { scale: [1, 1.05, 1] } : {}}
         transition={{ duration: 0.3, repeat: isAnimating ? Infinity : 0, repeatDelay: 0.2 }}
-        className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-violet-500 bg-clip-text text-transparent"
-        style={{ filter: 'drop-shadow(0 0 20px rgba(99,102,241,0.3))' }}
+        className="text-4xl sm:text-5xl font-bold text-[#5B7FFF]"
       >
         {formatCurrency(displayPrice)}
       </motion.div>

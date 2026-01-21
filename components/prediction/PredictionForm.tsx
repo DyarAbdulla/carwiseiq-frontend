@@ -11,15 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/lib/api'
-import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES, VEHICLE_TYPES } from '@/lib/constants'
+import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES } from '@/lib/constants'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useApiCache } from '@/hooks/use-api-cache'
-import { RotateCcw, RefreshCw, Car, Cog, MapPin } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { RotateCcw, RefreshCw } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { FieldTooltip, FIELD_TOOLTIPS } from './FieldTooltip'
 
 // Base schema - validation ranges will be updated dynamically
@@ -35,7 +35,6 @@ const carFormSchema = z.object({
   fuel_type: z.string().min(1),
   location: z.string().min(1),
   color: z.string().optional(),
-  vehicle_type: z.string().optional(),
 })
 
 type CarFormValues = z.infer<typeof carFormSchema>
@@ -45,11 +44,9 @@ interface PredictionFormProps {
   loading?: boolean
   prefillData?: CarFeatures | null
   onFormChange?: (data: Partial<CarFeatures> | null) => void
-  /** When true, hides the Vehicle type (optional) field. Used in compare section. */
-  hideVehicleType?: boolean
 }
 
-export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange, hideVehicleType = false }: PredictionFormProps) {
+export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange }: PredictionFormProps) {
   const t = useTranslations('predict.form')
   const { toast } = useToast()
   const [makes, setMakes] = useState<string[]>([])
@@ -93,7 +90,6 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       fuel_type: prefillData.fuel_type as any,
       location: prefillData.location,
       color: prefillData.color || '',
-      vehicle_type: (prefillData as any).vehicle_type || '',
     } : {
       year: SAMPLE_CAR.year,
       mileage: SAMPLE_CAR.mileage,
@@ -102,11 +98,10 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       make: SAMPLE_CAR.make,
       model: SAMPLE_CAR.model,
       trim: '',
-      condition: '',
+      condition: SAMPLE_CAR.condition as any,
       fuel_type: SAMPLE_CAR.fuel_type as any,
-      location: '',
+      location: SAMPLE_CAR.location,
       color: '',
-      vehicle_type: '',
     },
   })
 
@@ -210,7 +205,6 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
         fuel_type: prefillData.fuel_type as any,
         location: prefillData.location,
         color: prefillData.color || '',
-        vehicle_type: (prefillData as any).vehicle_type || '',
       })
       setSelectedMake(prefillData.make)
       updateModelsForMake(prefillData.make)
@@ -354,7 +348,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     }
 
     const cacheKey = `trims:${make}:${model}`
-
+    
     // Cancel any pending request for this key
     const existingController = abortControllersRef.current.get(cacheKey)
     if (existingController) {
@@ -426,7 +420,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     }
 
     const cacheKey = `engines:${make}:${model}`
-
+    
     // Cancel any pending request for this key
     const existingController = abortControllersRef.current.get(cacheKey)
     if (existingController) {
@@ -489,7 +483,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     }
 
     const cacheKey = `cylinders:${make}:${model}:${engineSize}`
-
+    
     // Cancel any pending request for this key
     const existingController = abortControllersRef.current.get(cacheKey)
     if (existingController) {
@@ -549,7 +543,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     }
 
     const cacheKey = `colors:${make}:${model}`
-
+    
     // Cancel any pending request for this key
     const existingController = abortControllersRef.current.get(cacheKey)
     if (existingController) {
@@ -613,7 +607,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     }
 
     const cacheKey = `fuelTypes:${make}:${model}`
-
+    
     // Cancel any pending request for this key
     const existingController = abortControllersRef.current.get(cacheKey)
     if (existingController) {
@@ -692,11 +686,11 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
   const loadLocations = async () => {
     try {
       const locationsList = await apiClient.getLocations()
-      // Fallback if API returned empty (dataset-only cities; no California, Texas, London, etc.)
-      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Nasiriyah', 'Hillah', 'Kut', 'Amarah']
+      // Fallback if API returned empty (e.g. cached stale, or backend edge case)
+      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Dubai', 'California', 'Texas', 'New York']
       setLocations(locationsList?.length > 0 ? locationsList : fallback)
     } catch {
-      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Nasiriyah', 'Hillah', 'Kut', 'Amarah']
+      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Dubai', 'California', 'Texas', 'New York']
       setLocations(fallback)
     }
   }
@@ -715,27 +709,22 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       return
     }
 
-    const conditionVal = String(data.condition ?? '').trim()
-    if (!conditionVal) {
-      form.setError('condition', { type: 'manual', message: 'Condition is required' })
-      return
-    }
-
     // Clean the data before submission
     const cleanedData: CarFeatures = {
       ...data,
+      // Trim is now required, ensure it's a valid string
       trim: String(data.trim).trim(),
+      // Ensure all required fields are present and valid
       year: Number(data.year),
       mileage: Number(data.mileage),
       engine_size: Number(data.engine_size),
       cylinders: Number(data.cylinders),
       make: String(data.make).trim(),
       model: String(data.model).trim(),
-      condition: conditionVal,
-      fuel_type: fuelType,
+      condition: String(data.condition).trim(),
+      fuel_type: fuelType, // Use validated fuel type
       location: String(data.location).trim(),
       color: data.color && data.color.trim() !== '' ? String(data.color).trim() : undefined,
-      vehicle_type: data.vehicle_type && String(data.vehicle_type).trim() && data.vehicle_type !== '__optional__' ? String(data.vehicle_type).trim() : undefined,
     }
     onSubmit(cleanedData)
   }
@@ -748,597 +737,474 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       cylinders: SAMPLE_CAR.cylinders,
       make: SAMPLE_CAR.make,
       model: SAMPLE_CAR.model,
-      trim: SAMPLE_CAR.trim || '',
+      trim: SAMPLE_CAR.trim || '', // Use sample trim or empty (will be loaded by useEffect)
       condition: SAMPLE_CAR.condition as any,
       fuel_type: SAMPLE_CAR.fuel_type as any,
       location: SAMPLE_CAR.location,
       color: '',
-      vehicle_type: '',
     })
     setSelectedMake(SAMPLE_CAR.make)
     updateModelsForMake(SAMPLE_CAR.make)
     // Trim will be loaded automatically by useEffect when make/model are set
   }
 
-  const [step, setStep] = useState(1)
-  const step1Fields = ['make', 'model', 'trim', 'year', 'mileage'] as const
-  const step2Fields = ['engine_size', 'cylinders', 'fuel_type'] as const
-  const step3Fields = ['condition', 'location'] as const
-
-  const handleNext = async () => {
-    const fields = step === 1 ? [...step1Fields] : step === 2 ? [...step2Fields] : [...step3Fields]
-    const ok = await form.trigger(fields)
-    if (ok) setStep((s) => Math.min(3, s + 1))
-  }
-
-  const stepLabels = [t('basicInfo'), t('technicalSpecs'), t('conditionLocation')]
-
   const clearForm = () => {
     form.reset()
     setSelectedMake('')
     setModels([])
-    setStep(1)
   }
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 overflow-visible relative">
-      {/* Step indicator */}
-      <div className="flex items-center justify-center gap-2 sm:gap-4 py-1">
-        {([1, 2, 3] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStep(s)}
-            className={cn(
-              "flex flex-col items-center gap-1 min-h-[44px] justify-center rounded-input px-4 py-2 transition-colors",
-              step === s
-                ? "text-indigo-500 dark:text-indigo-400"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            )}
+      {/* Basic Information */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">{t('basicInfo')}</h3>
+          <Badge variant="destructive" className="bg-red-500/20 text-red-400">MOST IMPORTANT</Badge>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <span
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors",
-                step >= s ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/40" : "bg-slate-200/80 dark:bg-white/10 text-slate-500 dark:text-slate-400"
-              )}
+            <FieldTooltip content={FIELD_TOOLTIPS.make}>
+              <Label htmlFor="make">{t('make')}</Label>
+            </FieldTooltip>
+            <SearchableSelect
+              value={form.watch('make') || ''}
+              onValueChange={(value) => {
+                if (value && value !== selectedMake) {
+                  form.setValue('make', value)
+                  setSelectedMake(value)
+                  updateModelsForMake(value)
+                }
+              }}
+              options={makes}
+              placeholder={initialLoading ? "Loading..." : "Type to search makes..."}
+              disabled={initialLoading}
+              emptyMessage="No makes available"
+              searchPlaceholder="Type to search..."
+            />
+          </motion.div>
+
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.model}>
+              <Label htmlFor="model">{t('model')}</Label>
+            </FieldTooltip>
+            <SearchableSelect
+              value={form.watch('model') || ''}
+              onValueChange={(value) => {
+                form.setValue('model', value)
+                setSelectedModel(value)
+                // Clear engine and cylinders when model changes
+                setAvailableEngines([])
+                setAvailableCylinders([])
+                // Clear trim when model changes - it will be reloaded by useEffect
+                form.setValue('trim', '')
+                form.clearErrors('trim')
+                setTrims([])
+                // Trim will be loaded automatically by the useEffect hook when makeValue/modelValue update
+              }}
+              options={models}
+              placeholder={!selectedMake ? "Select make first" : models.length > 0 ? "Type to search models..." : "No models available"}
+              disabled={!selectedMake || initialLoading}
+              emptyMessage={selectedMake ? `No models found for ${selectedMake}` : "Select a make first"}
+              searchPlaceholder="Type to search..."
+            />
+          </motion.div>
+
+          <motion.div
+            className="space-y-2 sm:col-span-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.trim}>
+              <Label htmlFor="trim">Trim <span className="text-red-400">*</span></Label>
+            </FieldTooltip>
+            <Select
+              key={`trim-select-${selectedMake}-${selectedModel}`}
+              value={form.watch('trim') || ''}
+              onValueChange={(value) => {
+                form.setValue('trim', value)
+                form.clearErrors('trim')
+              }}
+              disabled={!selectedMake || !selectedModel || loadingTrims}
             >
-              {s}
-            </span>
-            <span className="text-xs font-medium hidden sm:inline flex items-center justify-center gap-1">
-              {s === 1 && <Car className="h-3.5 w-3.5" />}
-              {s === 2 && <Cog className="h-3.5 w-3.5" />}
-              {s === 3 && <MapPin className="h-3.5 w-3.5" />}
-              {stepLabels[s - 1]}
-            </span>
-          </button>
-        ))}
+              <SelectTrigger className={form.formState.errors.trim ? 'border-red-500' : ''}>
+                <SelectValue placeholder={loadingTrims ? "Loading trims..." : selectedMake && selectedModel ? (trims.length > 0 ? "Select trim level" : "No trims available") : "Select make and model first"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {loadingTrims ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading trims...</div>
+                ) : trims.length > 0 ? (
+                  trims.map((trim) => (
+                    <SelectItem key={trim} value={trim} className="text-white">
+                      {trim}
+                    </SelectItem>
+                  ))
+                ) : selectedMake && selectedModel ? (
+                  <div className="p-2 text-center text-[#94a3b8] text-xs">
+                    No trim variants found for {selectedMake} {selectedModel} in our dataset.
+                  </div>
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
+                )}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.trim && (
+              <p className="text-sm text-red-400 mt-1">
+                {form.formState.errors.trim.message}
+              </p>
+            )}
+            {!form.formState.errors.trim && selectedMake && selectedModel && trims.length > 0 && (
+              <p className="text-xs text-[#94a3b8] mt-1">
+                ℹ️ Trim level is required and affects price prediction.
+              </p>
+            )}
+          </motion.div>
+
+          <motion.div
+            className="space-y-2 sm:col-span-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <Label htmlFor="color">Color (Optional)</Label>
+            <Select
+              value={form.watch('color') || ''}
+              onValueChange={(value) => {
+                form.setValue('color', value || '')
+              }}
+              disabled={!selectedMake || !selectedModel || loadingColors}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingColors ? "Loading..." : "Select color (optional)"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {loadingColors ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading colors...</div>
+                ) : availableColors.length > 0 ? (
+                  availableColors.map((color) => (
+                    <SelectItem key={color} value={color} className="text-white">
+                      {color}
+                    </SelectItem>
+                  ))
+                ) : selectedMake && selectedModel ? (
+                  <div className="p-2 text-center text-[#94a3b8]">No colors available</div>
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-[#94a3b8] mt-1">
+              ℹ️ Color is optional and does not affect price prediction.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.year}>
+              <Label htmlFor="year">{t('year')}: {form.watch('year')}</Label>
+            </FieldTooltip>
+            <Slider
+              value={[form.watch('year')]}
+              onValueChange={([value]) => form.setValue('year', value)}
+              min={YEAR_RANGE.min}
+              max={YEAR_RANGE.max}
+              step={1}
+              className="w-full"
+            />
+          </motion.div>
+
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.mileage}>
+              <Label htmlFor="mileage">{t('mileage')}</Label>
+            </FieldTooltip>
+            <motion.div
+              whileFocus={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Input
+                id="mileage"
+                type="number"
+                className={`border-[#2a2d3a] bg-[#1a1d29] hover:border-indigo-500/50 focus:border-[#5B7FFF] focus:ring-2 focus:ring-[#5B7FFF]/20 transition-all ${form.formState.errors.mileage ? 'animate-shake border-red-500' : ''
+                  }`}
+                {...form.register('mileage', { valueAsNumber: true })}
+              />
+            </motion.div>
+            {form.formState.errors.mileage && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.mileage.message}
+              </p>
+            )}
+          </motion.div>
+        </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {step === 1 && (
+      {/* Technical Specifications */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">{t('technicalSpecs')}</h3>
+          <Badge variant="warning">IMPORTANT</Badge>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <motion.div
-            key="step1"
-            initial={{ opacity: 0, x: 24 }}
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
+            transition={{ duration: 0.3, delay: 0.25 }}
           >
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('basicInfo')}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.make}>
-                  <Label htmlFor="make">{t('make')}</Label>
-                </FieldTooltip>
-                <SearchableSelect
-                  value={form.watch('make') || ''}
-                  onValueChange={(value) => {
-                    if (value && value !== selectedMake) {
-                      form.setValue('make', value)
-                      setSelectedMake(value)
-                      updateModelsForMake(value)
-                    }
-                  }}
-                  options={makes}
-                  placeholder={initialLoading ? "Loading..." : "Type to search makes..."}
-                  disabled={initialLoading}
-                  emptyMessage="No makes available"
-                  searchPlaceholder="Type to search..."
-                />
-              </motion.div>
-
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.model}>
-                  <Label htmlFor="model">{t('model')}</Label>
-                </FieldTooltip>
-                <SearchableSelect
-                  value={form.watch('model') || ''}
-                  onValueChange={(value) => {
-                    form.setValue('model', value)
-                    setSelectedModel(value)
-                    // Clear engine and cylinders when model changes
-                    setAvailableEngines([])
-                    setAvailableCylinders([])
-                    // Clear trim when model changes - it will be reloaded by useEffect
-                    form.setValue('trim', '')
-                    form.clearErrors('trim')
-                    setTrims([])
-                    // Trim will be loaded automatically by the useEffect hook when makeValue/modelValue update
-                  }}
-                  options={models}
-                  placeholder={!selectedMake ? "Select make first" : models.length > 0 ? "Type to search models..." : "No models available"}
-                  disabled={!selectedMake || initialLoading}
-                  emptyMessage={selectedMake ? `No models found for ${selectedMake}` : "Select a make first"}
-                  searchPlaceholder="Type to search..."
-                />
-              </motion.div>
-
-              <motion.div
-                className="space-y-2 sm:col-span-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.15 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.trim}>
-                  <Label htmlFor="trim">Trim <span className="text-red-400">*</span></Label>
-                </FieldTooltip>
-                <Select
-                  key={`trim-select-${selectedMake}-${selectedModel}`}
-                  value={form.watch('trim') || ''}
-                  onValueChange={(value) => {
-                    form.setValue('trim', value)
-                    form.clearErrors('trim')
-                  }}
-                  disabled={!selectedMake || !selectedModel || loadingTrims}
-                >
-                  <SelectTrigger className={form.formState.errors.trim ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={loadingTrims ? "Loading trims..." : selectedMake && selectedModel ? (trims.length > 0 ? "Select trim level" : "No trims available") : "Select make and model first"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {loadingTrims ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading trims...</div>
-                    ) : trims.length > 0 ? (
-                      trims.map((trim) => (
-                        <SelectItem key={trim} value={trim} className="text-white">
-                          {trim}
-                        </SelectItem>
-                      ))
-                    ) : selectedMake && selectedModel ? (
-                      <div className="p-2 text-center text-[#94a3b8] text-xs">
-                        No trim variants found for {selectedMake} {selectedModel} in our dataset.
-                      </div>
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.trim && (
-                  <p className="text-sm text-red-400 mt-1">
-                    {form.formState.errors.trim.message}
-                  </p>
+            <FieldTooltip content={FIELD_TOOLTIPS.engine_size}>
+              <Label htmlFor="engine_size">{t('engineSize')} <span className="text-red-400">*</span></Label>
+            </FieldTooltip>
+            <Select
+              value={form.watch('engine_size') ? form.watch('engine_size').toString() : ''}
+              onValueChange={(value) => {
+                if (value && value !== '') {
+                  const engineSize = parseFloat(value)
+                  form.setValue('engine_size', engineSize)
+                  // Clear any validation errors
+                  form.clearErrors('engine_size')
+                  // Load cylinders for selected engine if make/model are selected
+                  if (selectedMake && selectedModel) {
+                    loadAvailableCylinders(selectedMake, selectedModel, engineSize)
+                  }
+                }
+              }}
+              disabled={loadingEngines || (allEngineSizes.length === 0 && availableEngines.length === 0)}
+            >
+              <SelectTrigger className={form.formState.errors.engine_size ? 'border-red-500' : ''}>
+                <SelectValue placeholder={loadingEngines ? "Loading..." : (allEngineSizes.length > 0 || availableEngines.length > 0) ? "Select engine size" : "Loading engine sizes..."} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {loadingEngines ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading engines...</div>
+                ) : (availableEngines.length > 0 || allEngineSizes.length > 0) ? (
+                  (availableEngines.length > 0 ? availableEngines : allEngineSizes).map((engine) => (
+                    <SelectItem key={engine.size} value={engine.size.toString()} className="text-white">
+                      {engine.display}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">No engine sizes available</div>
                 )}
-                {!form.formState.errors.trim && selectedMake && selectedModel && trims.length > 0 && (
-                  <p className="text-xs text-[#94a3b8] mt-1">
-                    ℹ️ Trim level is required and affects price prediction.
-                  </p>
-                )}
-              </motion.div>
-
-              {!hideVehicleType && (
-                <motion.div
-                  className="space-y-2 sm:col-span-2"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.18 }}
-                >
-                  <Label htmlFor="vehicle_type">Vehicle type (optional)</Label>
-                  <Select
-                    value={form.watch('vehicle_type') || '__optional__'}
-                    onValueChange={(v) => form.setValue('vehicle_type', v === '__optional__' ? '' : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vehicle type (optional)" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[280px]">
-                      <SelectItem value="__optional__" className="text-white">— Optional —</SelectItem>
-                      {VEHICLE_TYPES.map((vt) => (
-                        <SelectItem key={vt} value={vt} className="text-white">{vt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-[#94a3b8] mt-1">Sedan, SUV, Truck, etc.; for reference only.</p>
-                </motion.div>
-              )}
-
-              <motion.div
-                className="space-y-2 sm:col-span-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <Label htmlFor="color">Color (Optional)</Label>
-                <Select
-                  value={form.watch('color') || ''}
-                  onValueChange={(value) => {
-                    form.setValue('color', value || '')
-                  }}
-                  disabled={!selectedMake || !selectedModel || loadingColors}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingColors ? "Loading..." : "Select color (optional)"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {loadingColors ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading colors...</div>
-                    ) : availableColors.length > 0 ? (
-                      availableColors.map((color) => (
-                        <SelectItem key={color} value={color} className="text-white">
-                          {color}
-                        </SelectItem>
-                      ))
-                    ) : selectedMake && selectedModel ? (
-                      <div className="p-2 text-center text-[#94a3b8]">No colors available</div>
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-[#94a3b8] mt-1">
-                  ℹ️ Color is optional and does not affect price prediction.
-                </p>
-              </motion.div>
-
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.year}>
-                  <Label htmlFor="year">{t('year')}: {form.watch('year')}</Label>
-                </FieldTooltip>
-                <Slider
-                  value={[form.watch('year')]}
-                  onValueChange={([value]) => form.setValue('year', value)}
-                  min={YEAR_RANGE.min}
-                  max={YEAR_RANGE.max}
-                  step={1}
-                  className="w-full"
-                />
-              </motion.div>
-
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.mileage}>
-                  <Label htmlFor="mileage">{t('mileage')}</Label>
-                </FieldTooltip>
-                <motion.div
-                  whileFocus={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Input
-                    id="mileage"
-                    type="number"
-                    className={cn(form.formState.errors.mileage && 'animate-shake border-red-500 focus-visible:ring-red-500/30')}
-                    {...form.register('mileage', { valueAsNumber: true })}
-                  />
-                </motion.div>
-                {form.formState.errors.mileage && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.mileage.message}
-                  </p>
-                )}
-              </motion.div>
-            </div>
+              </SelectContent>
+            </Select>
+            {form.formState.errors.engine_size && (
+              <p className="text-sm text-red-400 mt-1">
+                {form.formState.errors.engine_size.message}
+              </p>
+            )}
+            {!form.formState.errors.engine_size && (
+              <p className="text-xs text-[#94a3b8] mt-1">
+                ℹ️ Engine size is required and affects price prediction.
+              </p>
+            )}
           </motion.div>
-        )}
 
-        {step === 2 && (
           <motion.div
-            key="step2"
-            initial={{ opacity: 0, x: 24 }}
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
+            transition={{ duration: 0.3, delay: 0.3 }}
           >
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('technicalSpecs')}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.25 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.engine_size}>
-                  <Label htmlFor="engine_size">{t('engineSize')} <span className="text-red-400">*</span></Label>
-                </FieldTooltip>
-                <Select
-                  value={form.watch('engine_size') ? form.watch('engine_size').toString() : ''}
-                  onValueChange={(value) => {
-                    if (value && value !== '') {
-                      const engineSize = parseFloat(value)
-                      form.setValue('engine_size', engineSize)
-                      // Clear any validation errors
-                      form.clearErrors('engine_size')
-                      // Load cylinders for selected engine if make/model are selected
-                      if (selectedMake && selectedModel) {
-                        loadAvailableCylinders(selectedMake, selectedModel, engineSize)
-                      }
-                    }
-                  }}
-                  disabled={loadingEngines || (allEngineSizes.length === 0 && availableEngines.length === 0)}
-                >
-                  <SelectTrigger className={form.formState.errors.engine_size ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={loadingEngines ? "Loading..." : (allEngineSizes.length > 0 || availableEngines.length > 0) ? "Select engine size" : "Loading engine sizes..."} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {loadingEngines ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading engines...</div>
-                    ) : (availableEngines.length > 0 || allEngineSizes.length > 0) ? (
-                      (availableEngines.length > 0 ? availableEngines : allEngineSizes).map((engine) => (
-                        <SelectItem key={engine.size} value={engine.size.toString()} className="text-white">
-                          {engine.display}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">No engine sizes available</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.engine_size && (
-                  <p className="text-sm text-red-400 mt-1">
-                    {form.formState.errors.engine_size.message}
-                  </p>
+            <FieldTooltip content={FIELD_TOOLTIPS.cylinders}>
+              <Label htmlFor="cylinders">{t('cylinders')}</Label>
+            </FieldTooltip>
+            <Select
+              value={form.watch('cylinders') ? form.watch('cylinders').toString() : ''}
+              onValueChange={(value) => {
+                if (value && value !== '') {
+                  form.setValue('cylinders', parseInt(value))
+                }
+              }}
+              disabled={!selectedMake || !selectedModel || !engineSizeValue || loadingCylinders || availableCylinders.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingCylinders ? "Loading..." : availableCylinders.length > 0 ? "Select cylinders" : selectedMake && selectedModel && engineSizeValue ? "No cylinders available" : "Select make, model, and engine first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingCylinders ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading cylinders...</div>
+                ) : availableCylinders.length > 0 ? (
+                  availableCylinders.map((cyl) => (
+                    <SelectItem key={cyl} value={cyl.toString()} className="text-white">
+                      {cyl}
+                    </SelectItem>
+                  ))
+                ) : selectedMake && selectedModel && engineSizeValue ? (
+                  <div className="p-2 text-center text-[#94a3b8]">No cylinders found</div>
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">Select make, model, and engine first</div>
                 )}
-                {!form.formState.errors.engine_size && (
-                  <p className="text-xs text-[#94a3b8] mt-1">
-                    ℹ️ Engine size is required and affects price prediction.
-                  </p>
-                )}
-              </motion.div>
-
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.cylinders}>
-                  <Label htmlFor="cylinders">{t('cylinders')}</Label>
-                </FieldTooltip>
-                <Select
-                  value={form.watch('cylinders') ? form.watch('cylinders').toString() : ''}
-                  onValueChange={(value) => {
-                    if (value && value !== '') {
-                      form.setValue('cylinders', parseInt(value))
-                    }
-                  }}
-                  disabled={!selectedMake || !selectedModel || !engineSizeValue || loadingCylinders || availableCylinders.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingCylinders ? "Loading..." : availableCylinders.length > 0 ? "Select cylinders" : selectedMake && selectedModel && engineSizeValue ? "No cylinders available" : "Select make, model, and engine first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingCylinders ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading cylinders...</div>
-                    ) : availableCylinders.length > 0 ? (
-                      availableCylinders.map((cyl) => (
-                        <SelectItem key={cyl} value={cyl.toString()} className="text-white">
-                          {cyl}
-                        </SelectItem>
-                      ))
-                    ) : selectedMake && selectedModel && engineSizeValue ? (
-                      <div className="p-2 text-center text-[#94a3b8]">No cylinders found</div>
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">Select make, model, and engine first</div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </motion.div>
-
-              <motion.div
-                className="space-y-2 sm:col-span-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.35 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.fuel_type}>
-                  <Label>{t('fuelType')}</Label>
-                </FieldTooltip>
-                <Select
-                  value={form.watch('fuel_type')}
-                  onValueChange={(value) => {
-                    form.setValue('fuel_type', value as any)
-                    // Clear error when user selects a valid value
-                    if (form.formState.errors.fuel_type) {
-                      form.clearErrors('fuel_type')
-                    }
-                  }}
-                  disabled={!selectedMake || !selectedModel || loadingFuelTypes}
-                >
-                  <SelectTrigger className={form.formState.errors.fuel_type ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={loadingFuelTypes ? "Loading..." : selectedMake && selectedModel ? (fuelTypes.length > 0 ? "Select fuel type" : "No fuel types available") : "Select make and model first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingFuelTypes ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading fuel types...</div>
-                    ) : fuelTypes.length > 0 ? (
-                      fuelTypes.map((fuel) => (
-                        <SelectItem key={fuel} value={fuel} className="text-white">
-                          {fuel}
-                        </SelectItem>
-                      ))
-                    ) : selectedMake && selectedModel ? (
-                      <div className="p-2 text-center text-[#94a3b8]">No fuel types found for {selectedMake} {selectedModel}</div>
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.fuel_type && (
-                  <p className="text-sm text-red-400 mt-1">
-                    {form.formState.errors.fuel_type.message}
-                  </p>
-                )}
-              </motion.div>
-            </div>
+              </SelectContent>
+            </Select>
           </motion.div>
-        )}
 
-        {step === 3 && (
           <motion.div
-            key="step3"
-            initial={{ opacity: 0, x: 24 }}
+            className="space-y-2 sm:col-span-2"
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
+            transition={{ duration: 0.3, delay: 0.35 }}
           >
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('conditionLocation')}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.condition}>
-                  <Label>{t('condition')}</Label>
-                </FieldTooltip>
-                <Select
-                  value={form.watch('condition') || ''}
-                  onValueChange={(value) => {
-                    form.setValue('condition', value as any, { shouldValidate: true })
-                    form.clearErrors('condition')
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select condition" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {conditions.map((condition) => (
-                      <SelectItem key={condition} value={condition} className="text-white">
-                        {condition}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </motion.div>
-
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.45 }}
-              >
-                <FieldTooltip content={FIELD_TOOLTIPS.location}>
-                  <Label htmlFor="location">{t('location')}</Label>
-                </FieldTooltip>
-                <Select
-                  key="location-select"
-                  value={form.watch('location') || ''}
-                  onValueChange={(value) => form.setValue('location', value)}
-                  disabled={initialLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={initialLoading ? "Loading locations..." : "Select location"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {initialLoading ? (
-                      <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
-                    ) : locations.length > 0 ? (
-                      locations.map((location) => (
-                        <SelectItem key={location} value={location} className="text-white">
-                          {location}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-2 text-center text-[#94a3b8]">No locations available</div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </motion.div>
-            </div>
+            <FieldTooltip content={FIELD_TOOLTIPS.fuel_type}>
+              <Label>{t('fuelType')}</Label>
+            </FieldTooltip>
+            <Select
+              value={form.watch('fuel_type')}
+              onValueChange={(value) => {
+                form.setValue('fuel_type', value as any)
+                // Clear error when user selects a valid value
+                if (form.formState.errors.fuel_type) {
+                  form.clearErrors('fuel_type')
+                }
+              }}
+              disabled={!selectedMake || !selectedModel || loadingFuelTypes}
+            >
+              <SelectTrigger className={form.formState.errors.fuel_type ? 'border-red-500' : ''}>
+                <SelectValue placeholder={loadingFuelTypes ? "Loading..." : selectedMake && selectedModel ? (fuelTypes.length > 0 ? "Select fuel type" : "No fuel types available") : "Select make and model first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingFuelTypes ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading fuel types...</div>
+                ) : fuelTypes.length > 0 ? (
+                  fuelTypes.map((fuel) => (
+                    <SelectItem key={fuel} value={fuel} className="text-white">
+                      {fuel}
+                    </SelectItem>
+                  ))
+                ) : selectedMake && selectedModel ? (
+                  <div className="p-2 text-center text-[#94a3b8]">No fuel types found for {selectedMake} {selectedModel}</div>
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">Select make and model first</div>
+                )}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.fuel_type && (
+              <p className="text-sm text-red-400 mt-1">
+                {form.formState.errors.fuel_type.message}
+              </p>
+            )}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Condition & Location */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">{t('conditionLocation')}</h3>
+          <Badge variant="warning">IMPORTANT</Badge>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.condition}>
+              <Label>{t('condition')}</Label>
+            </FieldTooltip>
+            <Select
+              value={form.watch('condition') || ''}
+              onValueChange={(value) => form.setValue('condition', value as any)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select condition" />
+              </SelectTrigger>
+              <SelectContent>
+                {conditions.map((condition) => (
+                  <SelectItem key={condition} value={condition} className="text-white">
+                    {condition}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          <motion.div
+            className="space-y-2"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.45 }}
+          >
+            <FieldTooltip content={FIELD_TOOLTIPS.location}>
+              <Label htmlFor="location">{t('location')}</Label>
+            </FieldTooltip>
+            <Select
+              key="location-select"
+              value={form.watch('location') || ''}
+              onValueChange={(value) => form.setValue('location', value)}
+              disabled={initialLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={initialLoading ? "Loading locations..." : "Select location"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {initialLoading ? (
+                  <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
+                ) : locations.length > 0 ? (
+                  locations.map((location) => (
+                    <SelectItem key={location} value={location} className="text-white">
+                      {location}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-center text-[#94a3b8]">No locations available</div>
+                )}
+              </SelectContent>
+            </Select>
+          </motion.div>
+        </div>
+      </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-4 md:pt-2">
-        {step > 1 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setStep((s) => s - 1)}
-            className="min-h-[44px] rounded-input border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10"
-          >
-            Back
-          </Button>
-        )}
-        {step === 1 && (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={loadSampleCar}
-              className="min-h-[44px] rounded-input border-slate-200/80 dark:border-white/10"
-            >
-              {t('trySample')}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={clearForm}
-              className="min-h-[44px] rounded-input border-slate-200/80 dark:border-white/10"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              {t('clearForm')}
-            </Button>
-          </>
-        )}
-        {step < 3 ? (
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="flex-1 min-h-[44px] rounded-input bg-indigo-600 hover:bg-indigo-500 text-white shadow-soft"
-          >
-            Next
-          </Button>
-        ) : (
-          <motion.div
-            className="w-full sm:flex-1"
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                (step === 3 &&
-                  (!String(form.watch('condition') ?? '').trim() || !String(form.watch('location') ?? '').trim()))
-              }
-              className="w-full min-h-[52px] md:min-h-[48px] py-3 md:py-2.5 rounded-[20px] bg-gradient-to-r from-indigo-500 via-indigo-500 to-violet-500 hover:from-indigo-400 hover:via-indigo-400 hover:to-violet-400 text-white font-semibold shadow-[0_0_24px_rgba(99,102,241,0.35)] hover:shadow-[0_0_40px_rgba(99,102,241,0.5)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all duration-300"
-            >
-              {loading && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Predicting...' : t('predictButton')}
-            </Button>
-          </motion.div>
-        )}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={loadSampleCar}
+          className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a]"
+        >
+          {t('trySample')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={clearForm}
+          className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a]"
+        >
+          <RotateCcw className="mr-2 h-4 w-4" />
+          {t('clearForm')}
+        </Button>
+        <Button
+          type="submit"
+          disabled={loading || !form.formState.isValid}
+          className="flex-1 bg-[#5B7FFF] hover:bg-[#4a6fe6] text-white shadow-lg shadow-[#5B7FFF]/30 hover:shadow-xl hover:shadow-[#5B7FFF]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+          {loading ? 'Predicting...' : t('predictButton')}
+        </Button>
       </div>
     </form>
   )

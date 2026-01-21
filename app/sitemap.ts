@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/compare',
     '/batch',
     '/budget',
+    '/stats',
     '/login',
     '/register',
     '/my-listings',

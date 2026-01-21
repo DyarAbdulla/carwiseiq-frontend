@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,7 +11,6 @@ import { apiClient } from '@/lib/api'
 import Link from 'next/link'
 import { FavoriteButton } from '@/components/marketplace/FavoriteButton'
 import { listingImageUrl } from '@/lib/utils'
-import { SoldBadge } from '@/components/ui/sold-badge'
 
 export default function BuySellPage() {
   const [listings, setListings] = useState<any[]>([])
@@ -36,7 +35,11 @@ export default function BuySellPage() {
   const locale = useLocale()
   const t = useTranslations('marketplace')
 
-  const loadListings = useCallback(async () => {
+  useEffect(() => {
+    loadListings()
+  }, [page, filters, search])
+
+  const loadListings = async () => {
     setLoading(true)
     try {
       const params: any = {
@@ -61,11 +64,7 @@ export default function BuySellPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, filters, search])
-
-  useEffect(() => {
-    loadListings()
-  }, [loadListings])
+  }
 
   const formatTimeAgo = (date: string) => {
     const now = new Date()
@@ -89,21 +88,21 @@ export default function BuySellPage() {
           <h1 className="text-4xl font-bold text-white mb-4">{t('title')}</h1>
           <div className="flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[300px] relative">
-              <Search className="absolute start-3 top-3 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && loadListings()}
                 placeholder={t('searchPlaceholder')}
-                className="ps-10 bg-gray-800 border-gray-700 text-white"
+                className="pl-10 bg-gray-800 border-gray-700 text-white"
               />
             </div>
             <Button
               onClick={() => setFiltersOpen(!filtersOpen)}
               variant="outline"
-              className="border-gray-600 text-gray-300 inline-flex justify-start gap-2"
+              className="border-gray-600 text-gray-300"
             >
-              <Filter className="h-4 w-4 shrink-0" />
+              <Filter className="h-4 w-4 mr-2" />
               {t('filters')}
             </Button>
             <div className="flex gap-2 border border-gray-700 rounded-lg p-1">
@@ -239,78 +238,72 @@ export default function BuySellPage() {
               {t('showingRange', { from: ((page - 1) * 15) + 1, to: Math.min(page * 15, total), total })}
             </div>
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-              {listings.map((listing) => {
-                const isSold = listing.status === 'sold' || listing.status === 'Sold'
-                return (
-                <Card key={listing.id} className={`bg-gray-800 border-gray-700 hover:border-blue-500 transition-colors ${isSold ? 'opacity-75' : ''}`}>
-                  <div className={viewMode === 'grid' ? 'flex flex-col' : 'flex'}>
-                    <Link
-                      href={`/${locale}/buy-sell/${listing.id}`}
-                      className={`flex min-w-0 cursor-pointer ${viewMode === 'grid' ? 'flex-col' : 'flex-1'}`}
-                    >
-                      <div className={`${viewMode === 'grid' ? 'aspect-video' : 'w-64 shrink-0'} relative bg-gray-700 overflow-hidden ${viewMode === 'grid' ? 'rounded-t-lg' : 'rounded-l-lg'}`}>
-                        {(listing.cover_thumbnail_url || listing.cover_image) ? (
-                          <img
-                            src={listingImageUrl(listing.cover_thumbnail_url || listing.cover_image)}
-                            alt={`${listing.make} ${listing.model}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/images/cars/default-car.jpg'
-                              ;(e.target as HTMLImageElement).onerror = null
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm min-h-[120px]">
-                            {t('noImage')}
-                          </div>
-                        )}
-                        {isSold && <SoldBadge variant="corner" />}
-                      </div>
-                      <div className={`p-4 flex-1 min-w-0 ${viewMode === 'list' ? '' : ''}`}>
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-white font-semibold text-lg">
-                              {listing.year} {listing.make} {listing.model}
-                            </h3>
-                            <p className="text-blue-400 font-bold text-xl">
-                              ${listing.price?.toLocaleString()}
-                            </p>
-                          </div>
-                          <FavoriteButton
-                            listingId={listing.id}
-                            initialFavorite={listing.is_saved}
-                            size="md"
-                            onToggle={(isFavorite) => {
-                              listing.is_saved = isFavorite
-                            }}
-                          />
+              {listings.map((listing) => (
+              <Link key={listing.id} href={`/${locale}/buy-sell/${listing.id}`}>
+                <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
+                  <div className={viewMode === 'grid' ? '' : 'flex'}>
+                    <div className={`${viewMode === 'grid' ? 'aspect-video' : 'w-64'} bg-gray-700 rounded-t-lg overflow-hidden`}>
+                      {listing.cover_image ? (
+                        <img
+                          src={listingImageUrl(listing.cover_image)}
+                          alt={`${listing.make} ${listing.model}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/cars/default-car.jpg'
+                            ;(e.target as HTMLImageElement).onerror = null
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+                          {t('noImage')}
                         </div>
-                        <div className="space-y-1 text-sm text-gray-400">
-                          <p>{listing.mileage?.toLocaleString()} {listing.mileage_unit}</p>
-                          <p className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 shrink-0" />
-                            {listing.location_city}, {listing.location_state}
-                          </p>
-                          <p className="flex items-center gap-1 text-xs">
-                            <Calendar className="h-3 w-3 shrink-0" />
-                            {formatTimeAgo(listing.created_at)}
+                      )}
+                    </div>
+                    <CardContent className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="text-white font-semibold text-lg">
+                            {listing.year} {listing.make} {listing.model}
+                          </h3>
+                          <p className="text-blue-400 font-bold text-xl">
+                            ${listing.price?.toLocaleString()}
                           </p>
                         </div>
-                        <div className="mt-3">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            listing.condition === 'Excellent' ? 'bg-green-500/20 text-green-400' :
-                            listing.condition === 'Good' ? 'bg-blue-500/20 text-blue-400' :
-                            listing.condition === 'Fair' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
-                            {listing.condition}
-                          </span>
-                        </div>
+                        <FavoriteButton
+                          listingId={listing.id}
+                          initialFavorite={listing.is_saved}
+                          size="md"
+                          onToggle={(isFavorite) => {
+                            listing.is_saved = isFavorite
+                          }}
+                        />
                       </div>
-                    </Link>
+                      <div className="space-y-1 text-sm text-gray-400">
+                        <p>{listing.mileage?.toLocaleString()} {listing.mileage_unit}</p>
+                        <p className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {listing.location_city}, {listing.location_state}
+                        </p>
+                        <p className="flex items-center text-xs">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {formatTimeAgo(listing.created_at)}
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          listing.condition === 'Excellent' ? 'bg-green-500/20 text-green-400' :
+                          listing.condition === 'Good' ? 'bg-blue-500/20 text-blue-400' :
+                          listing.condition === 'Fair' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {listing.condition}
+                        </span>
+                      </div>
+                    </CardContent>
                   </div>
                 </Card>
-              );})}
+              </Link>
+              ))}
             </div>
             {/* Pagination */}
             {total > 15 && (

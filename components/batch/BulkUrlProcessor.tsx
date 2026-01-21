@@ -41,11 +41,7 @@ export function BulkUrlProcessor({ onResults }: BulkUrlProcessorProps) {
   const parseUrls = (text: string): string[] => {
     return text
       .split('\n')
-      .map((line) => {
-        let u = line.trim()
-        if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u
-        return u
-      })
+      .map((line) => line.trim())
       .filter((line) => line.length > 0 && isValidUrl(line))
       .slice(0, MAX_URLS)
   }
@@ -104,26 +100,35 @@ export function BulkUrlProcessor({ onResults }: BulkUrlProcessorProps) {
             return newStatuses
           })
 
-          // Process URL (per-URL try/catch: one failure does not stop others)
+          // Process URL
           apiClient
             .predictFromUrl(url)
             .then((result) => {
               results.push({ url, result })
+
               setUrlStatuses((prev) => {
-                const next = [...prev]
-                if (next[statusIndex]) next[statusIndex] = { ...next[statusIndex], status: 'success', result }
-                return next
+                const newStatuses = [...prev]
+                if (newStatuses[statusIndex]) {
+                  newStatuses[statusIndex] = {
+                    ...newStatuses[statusIndex],
+                    status: 'success',
+                    result,
+                  }
+                }
+                return newStatuses
               })
             })
-            .catch((err: any) => {
-              const raw = err?.response?.data?.detail
-              const errMsg = Array.isArray(raw)
-                ? (raw[0]?.msg || raw.map((x: any) => x?.msg || x).join('; '))
-                : (typeof raw === 'string' ? raw : err?.message || 'Failed to process')
+            .catch((error) => {
               setUrlStatuses((prev) => {
-                const next = [...prev]
-                if (next[statusIndex]) next[statusIndex] = { ...next[statusIndex], status: 'error', error: String(errMsg) }
-                return next
+                const newStatuses = [...prev]
+                if (newStatuses[statusIndex]) {
+                  newStatuses[statusIndex] = {
+                    ...newStatuses[statusIndex],
+                    status: 'error',
+                    error: error.message || 'Failed to process',
+                  }
+                }
+                return newStatuses
               })
             })
             .finally(() => {
@@ -138,51 +143,15 @@ export function BulkUrlProcessor({ onResults }: BulkUrlProcessorProps) {
       setIsProcessing(false)
       onResults(results)
 
-      const succeeded = results.length
-      const failed = urlList.length - succeeded
       if (toast?.toast) {
         toast.toast({
           title: 'Processing Complete',
-          description: failed > 0 ? `${succeeded} succeeded, ${failed} failed` : `Processed ${succeeded} URLs successfully`,
-          variant: failed > 0 ? 'default' : 'default',
+          description: `Processed ${results.length} URLs successfully`,
         })
       }
     }
 
     processQueue()
-  }
-
-  const retryOne = async (idx: number) => {
-    const s = urlStatuses[idx]
-    if (!s || s.status === 'processing' || !s.url) return
-    setUrlStatuses((prev) => {
-      const next = [...prev]
-      if (next[idx]) next[idx] = { ...next[idx], status: 'processing', error: undefined }
-      return next
-    })
-    try {
-      const result = await apiClient.predictFromUrl(s.url)
-      setUrlStatuses((prev) => {
-        const next = [...prev]
-        if (next[idx]) next[idx] = { ...next[idx], status: 'success', result, error: undefined }
-        return next
-      })
-      onResults([{ url: s.url, result }])
-      if (toast?.toast) {
-        toast.toast({ title: 'Retry succeeded', description: `Processed: ${s.url.slice(0, 50)}...`, variant: 'default' })
-      }
-    } catch (err: any) {
-      const raw = err?.response?.data?.detail
-      const errMsg = Array.isArray(raw) ? (raw[0]?.msg || raw.map((x: any) => x?.msg || x).join('; ')) : (typeof raw === 'string' ? raw : err?.message || 'Failed to process')
-      setUrlStatuses((prev) => {
-        const next = [...prev]
-        if (next[idx]) next[idx] = { ...next[idx], status: 'error', error: String(errMsg) }
-        return next
-      })
-      if (toast?.toast) {
-        toast.toast({ title: 'Retry failed', description: String(errMsg).slice(0, 80), variant: 'destructive' })
-      }
-    }
   }
 
   const getStatusIcon = (status: UrlStatus['status']) => {
@@ -300,11 +269,20 @@ https://www.syarah.com/car/...`}
                         )}
                         {urlStatus.error && (
                           <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-red-500" title={urlStatus.error}>{urlStatus.error}</p>
+                            <p className="text-xs text-red-500">{urlStatus.error}</p>
                             <button
-                              onClick={() => retryOne(index)}
-                              disabled={isProcessing}
-                              className="text-xs text-[#5B7FFF] hover:underline flex items-center gap-1 disabled:opacity-50"
+                              onClick={() => {
+                                const urlList = parseUrls(urls)
+                                const urlIndex = urlList.indexOf(urlStatus.url)
+                                if (urlIndex >= 0) {
+                                  // Retry logic can be added here
+                                  toast?.toast({
+                                    title: 'Retry',
+                                    description: 'Retry functionality coming soon',
+                                  })
+                                }
+                              }}
+                              className="text-xs text-[#5B7FFF] hover:underline flex items-center gap-1"
                             >
                               <RefreshCw className="h-3 w-3" />
                               Retry

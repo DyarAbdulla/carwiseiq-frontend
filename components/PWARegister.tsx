@@ -17,7 +17,10 @@ export default function PWARegister() {
     }
 
     // Guard: Check if service workers are supported
-    if (!('serviceWorker' in navigator)) return
+    if (!('serviceWorker' in navigator)) {
+      console.log('[PWA] Service Workers are not supported in this browser')
+      return
+    }
 
     // Check if PWA should be enabled
     const isProduction = process.env.NODE_ENV === 'production'
@@ -32,6 +35,9 @@ export default function PWARegister() {
             scope: '/',
           })
           .then((registration) => {
+            console.log('[PWA] Service Worker registered successfully:', registration.scope)
+
+            // Check for updates
             try {
               registration.addEventListener('updatefound', () => {
                 try {
@@ -39,21 +45,36 @@ export default function PWARegister() {
                   if (newWorker) {
                     newWorker.addEventListener('statechange', () => {
                       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New service worker available; app will use it on next load
+                        console.log('[PWA] New service worker available. Refresh to update.')
                       }
                     })
                   }
-                } catch {}
+                } catch (err) {
+                  console.warn('[PWA] Error in updatefound handler:', err)
+                }
               })
-            } catch {}
+            } catch (err) {
+              console.warn('[PWA] Error adding updatefound listener:', err)
+            }
           })
-          .catch(() => {})
+          .catch((error) => {
+            // Safe error logging - don't crash
+            console.warn('[PWA] Service Worker registration failed:', error)
+            // Silently fail - don't break the app if SW registration fails
+          })
 
         // Listen for controller changes (when a new service worker takes control)
         try {
-          navigator.serviceWorker.addEventListener('controllerchange', () => {})
-        } catch {}
-      } catch {}
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] Service Worker controller changed')
+          })
+        } catch (err) {
+          console.warn('[PWA] Error adding controllerchange listener:', err)
+        }
+      } catch (error) {
+        // Safe error logging for any registration setup errors
+        console.warn('[PWA] Error setting up service worker registration:', error)
+      }
     } else {
       // DEVELOPMENT (PWA not enabled): Unregister service worker and clear all caches
       const unregisterAndClearCaches = async () => {
@@ -64,15 +85,38 @@ export default function PWARegister() {
           // Unregister all service workers
           for (const registration of registrations) {
             try {
-              await registration.unregister()
-            } catch {}
+              const unregistered = await registration.unregister()
+              if (unregistered) {
+                console.log('[PWA Dev] Service Worker unregistered:', registration.scope)
+              }
+            } catch (err) {
+              console.warn('[PWA Dev] Error unregistering service worker:', err)
+            }
           }
 
+          // Clear all caches
           try {
             const cacheNames = await caches.keys()
-            await Promise.all(cacheNames.map((name) => caches.delete(name).catch(() => {})))
-          } catch {}
-        } catch {}
+            await Promise.all(
+              cacheNames.map((cacheName) => {
+                try {
+                  console.log('[PWA Dev] Deleting cache:', cacheName)
+                  return caches.delete(cacheName)
+                } catch (err) {
+                  console.warn('[PWA Dev] Error deleting cache:', cacheName, err)
+                  return Promise.resolve()
+                }
+              })
+            )
+          } catch (err) {
+            console.warn('[PWA Dev] Error getting cache names:', err)
+          }
+
+          console.log('[PWA Dev] All service workers unregistered and caches cleared')
+        } catch (error) {
+          // Safe error logging - don't crash
+          console.warn('[PWA Dev] Error unregistering service workers or clearing caches:', error)
+        }
       }
 
       unregisterAndClearCaches()

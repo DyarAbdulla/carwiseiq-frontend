@@ -74,7 +74,9 @@ function cacheVIN(vin: string, data: VINData): void {
     }
 
     localStorage.setItem(VIN_CACHE_KEY, JSON.stringify(cacheData))
-  } catch {}
+  } catch (error) {
+    console.warn('Failed to cache VIN data:', error)
+  }
 }
 
 interface NHTSAResponse {

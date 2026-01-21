@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,7 +23,11 @@ export default function PredictionHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [selectedPrediction, setSelectedPrediction] = useState<PredictionHistoryItem | null>(null)
 
-  const loadHistory = useCallback(async () => {
+  useEffect(() => {
+    loadHistory()
+  }, [])
+
+  const loadHistory = async () => {
     try {
       setLoading(true)
       const response = await apiClient.getPredictionHistory(100, 0)
@@ -40,11 +44,7 @@ export default function PredictionHistoryPage() {
     } finally {
       setLoading(false)
     }
-  }, [toast, tCommon])
-
-  useEffect(() => {
-    loadHistory()
-  }, [loadHistory])
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -442,7 +442,7 @@ export default function PredictionHistoryPage() {
                     result={{
                       predicted_price: selectedPrediction.predicted_price,
                       confidence_interval: selectedPrediction.confidence_interval,
-                      confidence_level: selectedPrediction.confidence_level as 'high' | 'medium' | 'low' | undefined,
+                      confidence_level: selectedPrediction.confidence_level,
                     }}
                     carFeatures={selectedPrediction.car_features}
                     onFeedbackSubmitted={handleFeedbackSubmitted}

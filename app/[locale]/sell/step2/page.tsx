@@ -20,14 +20,8 @@ function readAsDataURL(file: File): Promise<string> {
   })
 }
 
-const MAX_SIZE = 10 * 1024 * 1024 // 10MB per file
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
-const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES]
-
-function isAllowedType(t: string): boolean {
-  return ALLOWED_TYPES.includes(t)
-}
+const MAX_SIZE = 10 * 1024 * 1024
+const TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 export default function SellStep2Page() {
   const router = useRouter()
@@ -114,27 +108,22 @@ export default function SellStep2Page() {
     async (files: File[]) => {
       for (const f of files) {
         if (f.size > MAX_SIZE) {
-          toast({ title: 'File too large', description: `${f.name} exceeds 10MB`, variant: 'destructive' })
+          toast({ title: 'File too large', description: `${f.name} is over 10MB`, variant: 'destructive' })
           continue
         }
-        if (!isAllowedType(f.type)) {
-          toast({
-            title: 'Invalid file type',
-            description: 'Images: JPG, PNG, WebP. Videos: MP4, WebM, MOV.',
-            variant: 'destructive',
-          })
+        if (!TYPES.includes(f.type)) {
+          toast({ title: 'Invalid type', description: 'Use JPG, PNG or WebP', variant: 'destructive' })
           continue
         }
         if (images.length + uploadedImages.length >= UPLOAD_MAX) {
-          toast({ title: 'Maximum 10 files allowed', variant: 'destructive' })
+          toast({ title: 'Maximum 10 images allowed', variant: 'destructive' })
           break
         }
-        const isVideo = /^video\//.test(f.type)
         try {
-          const previewUrl = isVideo ? URL.createObjectURL(f) : await readAsDataURL(f)
-          addImage({ id: crypto.randomUUID(), file: f, previewUrl, isVideo })
+          const previewUrl = await readAsDataURL(f)
+          addImage({ id: crypto.randomUUID(), file: f, previewUrl })
         } catch (_) {
-          toast({ title: 'Could not add file', variant: 'destructive' })
+          toast({ title: 'Could not add image', variant: 'destructive' })
         }
       }
     },
@@ -147,8 +136,8 @@ export default function SellStep2Page() {
 
   const runUploadAndVision = useCallback(async () => {
     if (!listingId || images.length < UPLOAD_MIN) return
-    const allFiles = images.map((i) => i.file).filter((f): f is File => !!f)
-    if (allFiles.length < UPLOAD_MIN) return
+    const files = images.map((i) => i.file).filter((f): f is File => !!f)
+    if (files.length < UPLOAD_MIN) return
 
     setModalOpen(true)
     setStep('analyzing')
@@ -157,37 +146,35 @@ export default function SellStep2Page() {
     setDetectedModel(null)
 
     try {
-      // 1) Upload all media (images + videos) to listing
-      const uploadRes = await apiClient.uploadListingImages(listingId, allFiles)
+      // 1) Upload images to listing
+      const uploadRes = await apiClient.uploadListingImages(listingId, files)
       const ids = uploadRes.image_ids || []
       const urls = uploadRes.image_urls || []
       const combined = ids.map((id: number, i: number) => ({ id, url: urls[i] || '' })).filter((x: { url: string }) => x.url)
       setUploadedImages(combined)
-      // Revoke blob URLs for local videos before clearing to avoid leaks
-      images.filter((i) => i.isVideo && i.previewUrl && i.previewUrl.startsWith('blob:')).forEach((i) => URL.revokeObjectURL(i.previewUrl))
       setImages([])
       if (typeof window !== 'undefined') sessionStorage.setItem('sell_images', JSON.stringify(combined))
 
-      // 2) Run AI vision on image files only (videos are not analyzed)
-      const imageFiles = images.filter((i) => !i.isVideo).map((i) => i.file).filter((f): f is File => !!f)
-      if (imageFiles.length > 0) {
-        const vision = await apiClient.detectCarVision(imageFiles)
-        if (vision.make || vision.model) {
-          setDetectedMake(vision.make ?? null)
-          setDetectedModel(vision.model ?? null)
-          const conf = vision.confidence ?? 0
-          const label = conf >= 0.7 ? 'HIGH' : conf >= 0.4 ? 'MEDIUM' : 'LOW'
-          setAiDetection({
-            make: vision.make ?? undefined,
-            model: vision.model ?? undefined,
-            confidence: conf,
-            confidence_label: label,
-            raw: vision,
-          })
-        }
+      // 2) Run Claude vision detection
+      const vision = await apiClient.detectCarVision(files)
+      if (vision.make || vision.model) {
+        setDetectedMake(vision.make ?? null)
+        setDetectedModel(vision.model ?? null)
+        const conf = vision.confidence ?? 0
+        const label = conf >= 0.7 ? 'HIGH' : conf >= 0.4 ? 'MEDIUM' : 'LOW'
+        setAiDetection({
+          make: vision.make ?? undefined,
+          model: vision.model ?? undefined,
+          confidence: conf,
+          confidence_label: label,
+          raw: vision,
+        })
+        setStep('done')
+      } else {
+        setAiDetection(null)
+        setStep('error')
+        setErrorMessage(vision.error || "AI couldn't detect car details. Please enter manually.")
       }
-      setStep('done')
-      setErrorMessage(null)
     } catch (e: any) {
       setStep('error')
       setErrorMessage(e?.message || 'Upload or AI detection failed. Please try again or continue with manual entry.')
@@ -196,11 +183,11 @@ export default function SellStep2Page() {
 
   const handleNext = () => {
     if (count < UPLOAD_MIN) {
-      toast({ title: 'Please upload at least 4 files (images and/or videos)', variant: 'destructive' })
+      toast({ title: 'Please upload at least 4 images for AI detection', variant: 'destructive' })
       return
     }
     if (count > UPLOAD_MAX) {
-      toast({ title: 'Maximum 10 files allowed', variant: 'destructive' })
+      toast({ title: 'Maximum 10 images allowed', variant: 'destructive' })
       return
     }
     if (!listingId) {
@@ -224,9 +211,9 @@ export default function SellStep2Page() {
       <div className="max-w-4xl mx-auto pt-20">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Upload photos and videos</CardTitle>
+            <CardTitle className="text-2xl text-white">Upload photos</CardTitle>
             <CardDescription className="text-gray-400">
-              Add 4–10 images and/or videos. Images: JPG, PNG, WebP. Videos: MP4, WebM, MOV. Max 10MB per file. AI detection uses images only.
+              Add 4–10 photos of your car for AI detection. JPG, PNG or WebP. Max 10MB each.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -243,9 +230,9 @@ export default function SellStep2Page() {
             />
             <p className="text-gray-400 text-sm">
               {canNext ? (
-                <span className="text-emerald-400">✓ {count} file{count !== 1 ? 's' : ''} (4–10; AI uses images)</span>
+                <span className="text-emerald-400">✓ {count} photo{count !== 1 ? 's' : ''} (4–10 for AI detection)</span>
               ) : (
-                <span>Add 4–10 images and/or videos to continue. AI will detect make and model from images after you click Next.</span>
+                <span>Add 4–10 photos to continue. AI will detect make and model after you click Next.</span>
               )}
             </p>
             <div className="flex justify-between pt-4">

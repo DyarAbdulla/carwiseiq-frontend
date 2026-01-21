@@ -56,7 +56,9 @@ function persist(state: SellDraftState) {
       carDetails: state.carDetails,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
-  } catch {}
+  } catch (e) {
+    console.warn('SellDraft persist failed:', e)
+  }
 }
 
 type SellDraftContextValue = SellDraftState & {
@@ -101,7 +103,7 @@ export function SellDraftProvider({ children }: { children: React.ReactNode }) {
 
   const addImage = useCallback((img: SellDraftImage) => {
     setState((s) => {
-      if (s.images.length >= 10) return s
+      if (s.images.length >= 6) return s
       if (s.images.some((i) => i.id === img.id)) return s
       return { ...s, images: [...s.images, img] }
     })

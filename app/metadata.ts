@@ -1,12 +1,12 @@
 import { Metadata } from 'next'
 
 export const defaultMetadata: Metadata = {
-  title: 'CarWiseIQ - AI-Powered Car Pricing & Marketplace',
+  title: 'Car Price Predictor - AI-Powered Car Valuation & Marketplace',
   description: 'Get accurate car price predictions using AI. Buy and sell cars with confidence. Compare prices, find deals, and make informed decisions.',
   keywords: 'car price prediction, car valuation, buy cars, sell cars, car marketplace, AI car pricing',
-  authors: [{ name: 'CarWiseIQ' }],
-  creator: 'CarWiseIQ',
-  publisher: 'CarWiseIQ',
+  authors: [{ name: 'Car Price Predictor' }],
+  creator: 'Car Price Predictor',
+  publisher: 'Car Price Predictor',
   formatDetection: {
     email: false,
     address: false,
@@ -25,21 +25,21 @@ export const defaultMetadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    siteName: 'CarWiseIQ',
-    title: 'CarWiseIQ - AI-Powered Car Pricing & Marketplace',
+    siteName: 'Car Price Predictor',
+    title: 'Car Price Predictor - AI-Powered Car Valuation & Marketplace',
     description: 'Get accurate car price predictions using AI. Buy and sell cars with confidence.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'CarWiseIQ',
+        alt: 'Car Price Predictor',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CarWiseIQ - AI-Powered Car Pricing',
+    title: 'Car Price Predictor - AI-Powered Car Valuation',
     description: 'Get accurate car price predictions using AI. Buy and sell cars with confidence.',
     images: ['/og-image.jpg'],
   },

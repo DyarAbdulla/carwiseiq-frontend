@@ -88,8 +88,8 @@ export default function HelpPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
                   <ol className="list-decimal list-inside space-y-2">
-                    <li>Click &quot;Sell&quot; in the navigation menu</li>
-                    <li>Fill in your car&apos;s details (make, model, year, mileage, condition, etc.)</li>
+                    <li>Click "Sell" in the navigation menu</li>
+                    <li>Fill in your car's details (make, model, year, mileage, condition, etc.)</li>
                     <li>Upload photos of your car</li>
                     <li>Set your asking price</li>
                     <li>Add contact information</li>
@@ -114,8 +114,8 @@ export default function HelpPage() {
                   How do I contact a seller?
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
-                  Click &quot;Send Message&quot; on any listing to start a conversation with the seller. 
-                  You can also call them directly if they&apos;ve provided a phone number. 
+                  Click "Send Message" on any listing to start a conversation with the seller. 
+                  You can also call them directly if they've provided a phone number. 
                   Always meet in public places and verify the vehicle before payment.
                 </AccordionContent>
               </AccordionItem>
@@ -125,7 +125,7 @@ export default function HelpPage() {
                   Can I compare multiple cars?
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
-                  Yes! Click the &quot;Compare&quot; button on up to 3 listings, then click &quot;Compare&quot; 
+                  Yes! Click the "Compare" button on up to 3 listings, then click "Compare" 
                   in the comparison bar at the bottom to see them side-by-side with all specs, 
                   features, and price differences.
                 </AccordionContent>
@@ -136,8 +136,8 @@ export default function HelpPage() {
                   How do I view analytics for my listing?
                 </AccordionTrigger>
                 <AccordionContent className="text-[#94a3b8]">
-                  Go to &quot;My Listings&quot; from your profile menu, then click the analytics icon 
-                  on any of your listings. You&apos;ll see views, favorites, messages, engagement rate, 
+                  Go to "My Listings" from your profile menu, then click the analytics icon 
+                  on any of your listings. You'll see views, favorites, messages, engagement rate, 
                   and suggestions to improve your listing.
                 </AccordionContent>
               </AccordionItem>
@@ -153,7 +153,7 @@ export default function HelpPage() {
                     <li>Verify the vehicle before payment</li>
                     <li>Check vehicle history reports</li>
                     <li>Use secure payment methods</li>
-                    <li>Trust your instincts — if something seems off, walk away</li>
+                    <li>Trust your instincts - if something seems off, walk away</li>
                   </ul>
                 </AccordionContent>
               </AccordionItem>
@@ -171,7 +171,7 @@ export default function HelpPage() {
           </CardHeader>
           <CardContent>
             <p className="text-[#94a3b8] mb-4">
-              Can&apos;t find what you&apos;re looking for? Contact our support team:
+              Can't find what you're looking for? Contact our support team:
             </p>
             <div className="space-y-2">
               <p className="text-white">

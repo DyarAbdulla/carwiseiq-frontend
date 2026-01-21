@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,8 @@ import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { 
-  Eye, Heart, Trash2, BarChart3, Plus, Filter, CheckCircle2
+  Eye, Heart, MessageSquare, Edit, Trash2, BarChart3, 
+  Plus, Filter, CheckCircle2, Clock, XCircle, AlertCircle
 } from 'lucide-react'
 import { formatCurrency, listingImageUrl } from '@/lib/utils'
 import { motion } from 'framer-motion'
@@ -52,7 +53,16 @@ export default function MyListingsPage() {
   const toastHook = useToast()
   const toast = toastHook || { toast: () => {} }
 
-  const loadListings = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadListings()
+  }, [isAuthenticated, authLoading, statusFilter])
+
+  const loadListings = async () => {
     setLoading(true)
     try {
       const data = await apiClient.getMyListings(statusFilter === 'all' ? undefined : statusFilter)
@@ -70,16 +80,7 @@ export default function MyListingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, toast])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!isAuthenticated) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadListings()
-  }, [isAuthenticated, authLoading, statusFilter, loadListings, router, locale])
+  }
 
   const handleDeleteListing = async (listingId: number) => {
     if (!confirm('Are you sure you want to delete this listing?')) return
@@ -185,7 +186,7 @@ export default function MyListingsPage() {
 
         {/* Quick Stats */}
         {stats && (
-          <div className="grid gap-4 md:grid-cols-2 mb-6">
+          <div className="grid gap-4 md:grid-cols-4 mb-6">
             <Card className="border-[#2a2d3a] bg-[#1a1d29]">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -214,6 +215,33 @@ export default function MyListingsPage() {
               </CardContent>
             </Card>
 
+            <Card className="border-[#2a2d3a] bg-[#1a1d29]">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-500/10 rounded-lg">
+                    <MessageSquare className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#94a3b8]">Total Messages</p>
+                    <p className="text-2xl font-bold text-white">{stats.total_messages}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-[#2a2d3a] bg-[#1a1d29]">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-yellow-500/10 rounded-lg">
+                    <Clock className="h-6 w-6 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#94a3b8]">Avg Response Time</p>
+                    <p className="text-2xl font-bold text-white">{stats.average_response_time}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -290,7 +318,7 @@ export default function MyListingsPage() {
 
                   <CardContent>
                     {/* Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
                         <Eye className="h-4 w-4 text-blue-500 mx-auto mb-1" />
                         <p className="text-xs text-[#94a3b8]">Views</p>
@@ -300,6 +328,11 @@ export default function MyListingsPage() {
                         <Heart className="h-4 w-4 text-red-500 mx-auto mb-1" />
                         <p className="text-xs text-[#94a3b8]">Saves</p>
                         <p className="text-sm font-semibold text-white">{listing.saves_count}</p>
+                      </div>
+                      <div className="text-center">
+                        <MessageSquare className="h-4 w-4 text-green-500 mx-auto mb-1" />
+                        <p className="text-xs text-[#94a3b8]">Messages</p>
+                        <p className="text-sm font-semibold text-white">{listing.contacts_count}</p>
                       </div>
                     </div>
 

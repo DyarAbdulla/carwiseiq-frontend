@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useLocale } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
-import Link from 'next/link'
 import { 
   TrendingUp, 
   Users, 
@@ -12,8 +10,7 @@ import {
   BarChart3,
   Activity,
   Database,
-  Cpu,
-  Car
+  Cpu
 } from 'lucide-react'
 import {
   LineChart,
@@ -29,7 +26,6 @@ import {
 } from 'recharts'
 
 export default function AdminDashboardPage() {
-  const locale = useLocale()
   const [stats, setStats] = useState<any>(null)
   const [predictionsChart, setPredictionsChart] = useState<any[]>([])
   const [ratingsChart, setRatingsChart] = useState<any[]>([])
@@ -154,21 +150,16 @@ export default function AdminDashboardPage() {
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">
-              Listings
+              Active Listings
             </CardTitle>
-            <Car className="h-4 w-4 text-yellow-500" />
+            <MessageSquare className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {stats?.listings?.active || 0} active
+              {stats?.listings?.active || 0}
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              {(marketplaceAnalytics?.listings_by_status?.sold ?? 0) > 0
-                ? `${marketplaceAnalytics?.listings_by_status?.sold} sold · `
-                : ''}
-              <Link href={`/${locale}/admin/listings`} className="text-blue-400 hover:underline">
-                Manage →
-              </Link>
+              Buy & Sell listings
             </div>
           </CardContent>
         </Card>

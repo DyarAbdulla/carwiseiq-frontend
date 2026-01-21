@@ -86,9 +86,9 @@ export function SocialShareButtons({ listing, url }: SocialShareButtonsProps) {
       <Button
         onClick={() => setShareDialogOpen(true)}
         variant="outline"
-        className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white inline-flex justify-start gap-2"
+        className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
       >
-        <Share2 className="h-4 w-4 shrink-0" />
+        <Share2 className="h-4 w-4 mr-2" />
         Share
       </Button>
 
@@ -105,63 +105,63 @@ export function SocialShareButtons({ listing, url }: SocialShareButtonsProps) {
             <Button
               onClick={() => handleShare('whatsapp')}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <MessageCircle className="h-4 w-4 shrink-0" />
+              <MessageCircle className="h-4 w-4 mr-2" />
               WhatsApp
             </Button>
 
             <Button
               onClick={() => handleShare('facebook')}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <Facebook className="h-4 w-4 shrink-0" />
+              <Facebook className="h-4 w-4 mr-2" />
               Facebook
             </Button>
 
             <Button
               onClick={() => handleShare('twitter')}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <Twitter className="h-4 w-4 shrink-0" />
+              <Twitter className="h-4 w-4 mr-2" />
               Twitter
             </Button>
 
             <Button
               onClick={() => handleShare('linkedin')}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <Linkedin className="h-4 w-4 shrink-0" />
+              <Linkedin className="h-4 w-4 mr-2" />
               LinkedIn
             </Button>
 
             <Button
               onClick={() => handleShare('email')}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <Mail className="h-4 w-4 shrink-0" />
+              <Mail className="h-4 w-4 mr-2" />
               Email
             </Button>
 
             <Button
               onClick={handleCopyLink}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start"
             >
-              <Copy className="h-4 w-4 shrink-0" />
+              <Copy className="h-4 w-4 mr-2" />
               Copy Link
             </Button>
 
             <Button
               onClick={handleQRCode}
               variant="outline"
-              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start gap-2 col-span-2"
+              className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white justify-start col-span-2"
             >
-              <QrCode className="h-4 w-4 shrink-0" />
+              <QrCode className="h-4 w-4 mr-2" />
               Generate QR Code
             </Button>
           </div>

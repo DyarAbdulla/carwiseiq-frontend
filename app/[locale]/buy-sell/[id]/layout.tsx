@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: 'Car Listing - CarWiseIQ',
-    description: 'View car listing details on CarWiseIQ marketplace',
+    title: 'Car Listing - Car Price Predictor',
+    description: 'View car listing details on Car Price Predictor marketplace',
   }
 }
 

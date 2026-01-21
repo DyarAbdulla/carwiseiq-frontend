@@ -39,7 +39,7 @@ export function HeroCinematicBackground() {
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
       {/* Scene 1: car-hero-1 (left) + car-hero-2 (right) */}
       <div
-        className={`absolute inset-0 ${currentScene === 0 ? 'opacity-100' : 'opacity-0'} transition-opacity duration-1000`}
+        className={`absolute inset-0 ${currentScene === 0 ? 'opacity-100' : 'opacity-0'} transition-opacity duration-[1000ms]`}
         style={{ transition: reducedMotion ? 'none' : 'opacity 1000ms ease-in-out' }}
       >
         {/* Desktop: Left car (car-hero-1) */}
@@ -102,7 +102,7 @@ export function HeroCinematicBackground() {
 
       {/* Scene 2: car-hero-3 (left) + car-hero-4 (right) */}
       <div
-        className={`absolute inset-0 ${currentScene === 1 ? 'opacity-100' : 'opacity-0'} transition-opacity duration-1000`}
+        className={`absolute inset-0 ${currentScene === 1 ? 'opacity-100' : 'opacity-0'} transition-opacity duration-[1000ms]`}
         style={{ transition: reducedMotion ? 'none' : 'opacity 1000ms ease-in-out' }}
       >
         {/* Desktop: Left car (car-hero-3) */}

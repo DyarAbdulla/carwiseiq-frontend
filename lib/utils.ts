@@ -51,56 +51,6 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced
 }
 
-/** L/100km = 235.215 / MPG. Rounded to 1 decimal. */
-export function mpgToL100km(mpg: number): number {
-  if (mpg == null || mpg <= 0) return 0
-  return Math.round((235.215 / mpg) * 10) / 10
-}
-
-/** Format city/highway MPG as "X / Y L/100km". Converts via mpgToL100km. */
-export function formatFuelEconomyL100km(city: number, highway: number): string {
-  if (city == null || highway == null || city <= 0 || highway <= 0) return '—'
-  const c = mpgToL100km(city)
-  const h = mpgToL100km(highway)
-  return `${c} / ${h} L/100km`
-}
-
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov', '.avi']
-
-/**
- * Detect if a URL points to a video file by extension or path.
- */
-export function isVideoFile(url: string | null | undefined): boolean {
-  if (url == null || typeof url !== 'string' || !url) return false
-  const path = url.split('?')[0] || ''
-  const lower = path.toLowerCase()
-  return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext))
-}/**
- * Format phone for display (e.g. +964 777 447 2106 or 0777 447 2106).
- */
-export function formatPhoneNumber(phone: string | null | undefined): string {
-  if (phone == null || typeof phone !== 'string' || !phone.trim()) return ''
-  const cleaned = phone.replace(/\D/g, '')
-  if (cleaned.startsWith('964') && cleaned.length >= 10) {
-    return `+964 ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`
-  }
-  if (cleaned.startsWith('0') && cleaned.length >= 10) {
-    return `0${cleaned.slice(1, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`
-  }
-  return phone
-}
-
-/**
- * Build tel: link from listing phone_country_code and phone.
- */
-export function getContactTel(listing: { phone?: string | null; phone_country_code?: string | null }): string {
-  const cc = (listing?.phone_country_code || '').trim()
-  const p = (listing?.phone || '').replace(/\D/g, '')
-  if (!p) return ''
-  const pre = cc ? (cc.startsWith('+') ? cc : '+' + cc) : ''
-  return `tel:${pre}${p}`
-}
-
 /**
  * Resolve listing image src: full URLs as-is; /uploads/... prefixed with API base.
  */
@@ -113,3 +63,4 @@ export function listingImageUrl(
   const base = (apiBase ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/$/, '')
   return base ? base + (src.startsWith('/') ? src : '/' + src) : src
 }
+

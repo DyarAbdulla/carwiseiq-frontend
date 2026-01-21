@@ -59,7 +59,7 @@ export function ComparisonBar({ selectedCars, onRemove, onClear }: ComparisonBar
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-0 start-0 end-0 z-50 p-4 bg-gradient-to-r from-[#1a1d29] via-[#2a2d3a] to-[#1a1d29] border-t border-[#5B7FFF]/30 shadow-2xl"
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-r from-[#1a1d29] via-[#2a2d3a] to-[#1a1d29] border-t border-[#5B7FFF]/30 shadow-2xl"
         >
           <div className="container mx-auto max-w-7xl">
             <div className="flex items-center gap-4 flex-wrap">
@@ -89,7 +89,7 @@ export function ComparisonBar({ selectedCars, onRemove, onClear }: ComparisonBar
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute top-1 end-1 h-8 w-8 bg-black/50 hover:bg-red-500/50 text-white"
+                          className="absolute top-1 right-1 h-8 w-8 bg-black/50 hover:bg-red-500/50 text-white"
                           onClick={() => onRemove(car.id)}
                           aria-label={`Remove ${car.make} ${car.model} from comparison`}
                         >
@@ -119,19 +119,19 @@ export function ComparisonBar({ selectedCars, onRemove, onClear }: ComparisonBar
                 <Button
                   onClick={handleCompare}
                   disabled={selectedCars.length < 2}
-                  className="bg-gradient-to-r from-[#5B7FFF] to-[#8B5CF6] hover:from-[#5B7FFF]/90 hover:to-[#8B5CF6]/90 text-white min-h-[44px] inline-flex justify-start gap-2"
+                  className="bg-gradient-to-r from-[#5B7FFF] to-[#8B5CF6] hover:from-[#5B7FFF]/90 hover:to-[#8B5CF6]/90 text-white min-h-[44px]"
                   aria-label={`Compare ${selectedCars.length} cars`}
                 >
-                  <GitCompare className="h-4 w-4 shrink-0" />
+                  <GitCompare className="h-4 w-4 mr-2" />
                   Compare ({selectedCars.length})
                 </Button>
                 <Button
                   onClick={onClear}
                   variant="outline"
-                  className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white min-h-[44px] inline-flex justify-start gap-2"
+                  className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white min-h-[44px]"
                   aria-label="Clear all selected cars"
                 >
-                  <Trash2 className="h-4 w-4 shrink-0" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Clear All
                 </Button>
               </div>

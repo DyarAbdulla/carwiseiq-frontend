@@ -3,15 +3,7 @@
  */
 
 import { useMemo } from 'react'
-
-/** Shape of car details used for validation (sell/listing flow) */
-export interface CarDetailsForValidation {
-  year?: number
-  mileage?: number
-  condition?: string
-  has_accident?: boolean
-  severity?: string
-}
+import type { SellCarRequest } from '@/lib/types'
 
 export interface ValidationWarning {
   field: string
@@ -36,7 +28,7 @@ function getCommonEngines(make: string, model: string): string[] {
   return commonEngines[key] || ['2.0', '2.5', '3.5']
 }
 
-export function useCarValidation(carDetails: Partial<CarDetailsForValidation>): ValidationWarning[] {
+export function useCarValidation(carDetails: Partial<SellCarRequest>): ValidationWarning[] {
   return useMemo(() => {
     const warnings: ValidationWarning[] = []
     

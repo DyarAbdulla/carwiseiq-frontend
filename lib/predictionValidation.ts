@@ -86,6 +86,15 @@ export function logSuspiciousPrediction(
   const validation = validatePrediction(predicted, marketAvg)
   
   if (!validation.isValid && validation.ratio) {
+    console.warn('Suspicious prediction detected:', {
+      predicted,
+      marketAvg,
+      ratio: validation.ratio,
+      differencePercent: validation.differencePercent,
+      carDetails,
+      timestamp: new Date().toISOString(),
+    })
+    
     // In production, you might want to send this to an analytics service
     // Example: analytics.track('suspicious_prediction', { ... })
   }

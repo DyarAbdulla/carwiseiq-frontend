@@ -3,8 +3,7 @@
  * Handles JWT token storage, API calls, and authentication state
  */
 
-const isProduction = process.env.NODE_ENV === 'production';
-const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || (isProduction ? 'https://api.carwiseiq.com' : 'http://localhost:8000');
+const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * Get JWT token from localStorage

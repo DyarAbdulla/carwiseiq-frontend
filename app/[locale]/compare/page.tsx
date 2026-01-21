@@ -1,33 +1,20 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useTranslations, useLocale } from 'next-intl'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PredictionForm } from '@/components/prediction/PredictionForm'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield } from 'lucide-react'
+import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatCurrency, mpgToL100km, formatFuelEconomyL100km } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import Image from 'next/image'
 import { ListingCardSkeleton } from '@/components/common/LoadingSkeleton'
-import { getCarSpecs } from '@/lib/carSpecifications'
-import { ComparisonChart } from '@/components/compare/ComparisonChart'
-import { SpecificationTable } from '@/components/compare/SpecificationTable'
-import { ValueAnalysisSection } from '@/components/compare/ValueAnalysisSection'
-import { OwnershipCostsSection } from '@/components/compare/OwnershipCostsSection'
-import { CompareSummaryCards } from '@/components/compare/CompareSummaryCards'
-import { SmartRecommendations } from '@/components/compare/SmartRecommendations'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { ExportPDF } from '@/components/compare/ExportPDF'
-import { ShareComparison } from '@/components/compare/ShareComparison'
-import { CompareSaveAndHistory } from '@/components/compare/CompareSaveAndHistory'
-import { saveCompareToHistory, type CompareHistoryEntry } from '@/lib/compareHistory'
-import { parseCompareUrl } from '@/lib/shareUtils'
 
 interface CarCard {
   id: string
@@ -66,39 +53,25 @@ export default function ComparePage() {
   const [listings, setListings] = useState<ListingCard[]>([])
   const [loadingListings, setLoadingListings] = useState(false)
   const [predictingAll, setPredictingAll] = useState(false)
-  const [highlightDifferencesOnly, setHighlightDifferencesOnly] = useState(false)
-
-  const MAX_CARS = 4
 
   // ALL hooks must be called unconditionally BEFORE any conditional returns
   const t = useTranslations('compare')
   const tCommon = useTranslations('common')
   const toastHook = useToast()
   const toast = toastHook || { toast: () => {} }
-  const router = useRouter()
-  const locale = useLocale()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Restore prediction comparison from share URL (?type=pred&d=...)
-  useEffect(() => {
-    if (!mounted || !searchParams || listingIds.length > 0) return
-    const parsed = parseCompareUrl(searchParams)
-    if (parsed?.mode === 'prediction' && parsed.state?.cars?.length) {
-      setCars(parsed.state.cars.map((c, i) => ({
-        id: `load-${i}-${Date.now()}`,
-        features: c.features as CarFeatures | null,
-        prediction: c.prediction as PredictionResponse | null,
-        loading: false,
-      })))
-      router.replace(`/${locale}/compare`)
-    }
-  }, [mounted, searchParams, listingIds.length, router, locale])
-
   // Load marketplace listings if IDs provided
-  const loadListings = useCallback(async () => {
+  useEffect(() => {
+    if (isMarketplaceComparison && listingIds.length > 0) {
+      loadListings()
+    }
+  }, [isMarketplaceComparison, listingIds.join(',')])
+
+  const loadListings = async () => {
     setLoadingListings(true)
     try {
       const listingPromises = listingIds.map(id => apiClient.getListing(id))
@@ -135,15 +108,7 @@ export default function ComparePage() {
     } finally {
       setLoadingListings(false)
     }
-  }, [listingIds, toast])
-
-  const listingIdsKey = listingIds.join(',')
-
-  useEffect(() => {
-    if (isMarketplaceComparison && listingIds.length > 0) {
-      loadListings()
-    }
-  }, [isMarketplaceComparison, listingIdsKey, listingIds.length, loadListings])
+  }
 
   // Calculate comparison metrics - MUST be before conditional return
   const allCarsHavePredictions = cars.every(c => c.prediction && c.features)
@@ -193,79 +158,19 @@ export default function ComparePage() {
     }
   }, [cars, allCarsHavePredictions, hasMultipleCars])
 
-  // Specs from getCarSpecs for each car (prediction mode)
-  const specMaps = useMemo(() =>
-    cars.map(c => c.features ? getCarSpecs({
-      make: c.features.make,
-      model: c.features.model,
-      year: c.features.year,
-      engine_size: c.features.engine_size,
-      cylinders: c.features.cylinders,
-      fuel_type: c.features.fuel_type,
-    }) : null),
-  [cars])
-
-  // Chart data with price, performance, radar dimensions
+  // Generate chart data - MUST be before conditional return
   const chartData = useMemo(() => {
     if (!comparisonMetrics) return []
-    return cars.map((car, index) => {
-      const spec = specMaps[index]
-      const fe = spec?.fuelEconomy
-      const avgMpg = fe ? (fe.city + fe.highway) / 2 : 0
-      return {
-        name: `Car ${index + 1}`,
-        shortName: car.features ? `${car.features.make} ${car.features.model}`.slice(0, 14) : `Car ${index + 1}`,
-        price: car.prediction?.predicted_price || 0,
-        horsepower: spec?.horsepower,
-        fuelEconomy: fe ? mpgToL100km(avgMpg) : undefined,
-        acceleration: spec?.acceleration,
-        value: spec?.horsepower && car.prediction?.predicted_price ? Math.round(car.prediction.predicted_price / spec.horsepower) : undefined,
-        economy: fe ? mpgToL100km(avgMpg) : undefined,
-        fullName: `${car.features?.make || ''} ${car.features?.model || ''}`.trim() || `Car ${index + 1}`,
-        isBestDeal: index === comparisonMetrics.bestDealIndex,
-        isMostExpensive: index === comparisonMetrics.mostExpensiveIndex,
-      }
-    })
-  }, [cars, comparisonMetrics, specMaps])
-
-  // Spec table rows for prediction comparison
-  const specRows = useMemo(() => {
-    if (!allCarsHavePredictions || !comparisonMetrics) return []
-    const rows = [
-      { label: 'Make & Model', values: cars.map(c => c.features ? `${c.features.make} ${c.features.model}` : '—') },
-      { label: 'Year', values: cars.map(c => c.features?.year ?? '—'), icon: Calendar },
-      { label: 'Mileage', values: cars.map(c => c.features?.mileage ?? null), suffix: ' km', format: (v: string | number) => Number(v).toLocaleString() },
-      { label: 'Condition', values: cars.map(c => c.features?.condition ?? '—') },
-      { label: 'Fuel Type', values: cars.map(c => c.features?.fuel_type ?? '—'), icon: Fuel },
-      { label: 'Engine', values: cars.map(c => c.features?.engine_size ? `${c.features.engine_size}L` : '—'), icon: Cog },
-      { label: 'Cylinders', values: cars.map(c => c.features?.cylinders ?? '—') },
-      { label: 'Horsepower', values: cars.map((_, i) => specMaps[i]?.horsepower ?? null), higherIsBetter: true, suffix: ' hp', icon: Gauge },
-      { label: 'Torque', values: cars.map((_, i) => specMaps[i]?.torque ?? null), higherIsBetter: true, suffix: ' lb-ft' },
-      { label: '0-60 mph', values: cars.map((_, i) => specMaps[i]?.acceleration ?? null), suffix: ' s' },
-      { label: 'Top Speed', values: cars.map((_, i) => specMaps[i]?.topSpeed ?? null), higherIsBetter: true, suffix: ' mph' },
-      { label: 'Transmission', values: cars.map((_, i) => specMaps[i]?.transmission ?? '—') },
-      { label: 'Drivetrain', values: cars.map((_, i) => specMaps[i]?.drivetrain ?? '—') },
-      { label: 'Fuel Economy (L/100km)', values: cars.map((_, i) => { const e = specMaps[i]?.fuelEconomy; return e ? formatFuelEconomyL100km(e.city, e.highway) : '—' }) },
-      { label: 'Predicted Price', values: cars.map(c => c.prediction?.predicted_price ?? null), format: (v: string | number) => formatCurrency(Number(v)) },
-      { label: 'Confidence', values: cars.map(c => c.prediction?.confidence_range ?? null), higherIsBetter: true, suffix: '%' },
-      { label: 'Savings vs Highest', values: comparisonMetrics.savings, format: (v: string | number) => formatCurrency(Number(v)), suffix: '' },
-    ]
-    if (highlightDifferencesOnly) {
-      return rows.filter(r => {
-        const v = r.values.map(x => String(x ?? ''))
-        return new Set(v).size > 1
-      })
-    }
-    return rows
-  }, [cars, comparisonMetrics, specMaps, allCarsHavePredictions, highlightDifferencesOnly])
+    return cars.map((car, index) => ({
+      name: `Car ${index + 1}`,
+      price: car.prediction?.predicted_price || 0,
+      fullName: `${car.features?.make} ${car.features?.model}`,
+      isBestDeal: index === comparisonMetrics.bestDealIndex,
+      isMostExpensive: index === comparisonMetrics.mostExpensiveIndex,
+    }))
+  }, [cars, comparisonMetrics])
 
   const addCar = () => {
-    if (cars.length >= MAX_CARS) {
-      if (toast?.toast) {
-        toast.toast({ title: 'Limit reached', description: `You can compare up to ${MAX_CARS} cars.`, variant: 'default' })
-      }
-      return
-    }
     setCars([...cars, { id: Date.now().toString(), features: null, prediction: null, loading: false }])
   }
 
@@ -410,31 +315,158 @@ export default function ComparePage() {
     }
   }
 
-  const handleSaveCompare = (name: string) => {
-    if (isMarketplaceComparison && marketplaceMetrics && listings.length >= 2) {
-      saveCompareToHistory({ name, mode: 'marketplace', ids: listings.map(l => l.id) })
-      toast?.toast?.({ title: 'Saved', description: 'Comparison saved to history.' })
-    } else if (!isMarketplaceComparison && allCarsHavePredictions && hasMultipleCars) {
-      saveCompareToHistory({
-        name,
-        mode: 'prediction',
-        state: { cars: cars.map(c => ({ features: c.features, prediction: c.prediction })) },
+  // Export comparison as PDF
+  const handleExportPDF = async () => {
+    if (!allCarsHavePredictions) {
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
+          description: 'Please predict all cars before exporting',
+          variant: 'destructive',
+        })
+      }
+      return
+    }
+
+    try {
+      if (typeof window === 'undefined') {
+        throw new Error('PDF export is only available in the browser')
+      }
+      const jsPDF = (await import('jspdf')).default
+      const doc = new jsPDF()
+
+      // Title
+      doc.setFontSize(20)
+      doc.text('Car Comparison Report', 14, 20)
+      doc.setFontSize(12)
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30)
+
+      let yPos = 40
+      cars.forEach((car, index) => {
+        if (yPos > 250) {
+          doc.addPage()
+          yPos = 20
+        }
+
+        doc.setFontSize(14)
+        doc.text(`Car ${index + 1}: ${car.features?.make} ${car.features?.model}`, 14, yPos)
+        yPos += 8
+
+        doc.setFontSize(10)
+        doc.text(`Year: ${car.features?.year}`, 14, yPos)
+        yPos += 6
+        doc.text(`Mileage: ${car.features?.mileage?.toLocaleString()} km`, 14, yPos)
+        yPos += 6
+        doc.text(`Condition: ${car.features?.condition}`, 14, yPos)
+        yPos += 6
+        doc.text(`Predicted Price: ${formatCurrency(car.prediction?.predicted_price || 0)}`, 14, yPos)
+        yPos += 6
+        if (car.prediction?.confidence_range) {
+          doc.text(`Confidence: ${car.prediction.confidence_range}%`, 14, yPos)
+          yPos += 6
+        }
+        yPos += 5
       })
-      toast?.toast?.({ title: 'Saved', description: 'Comparison saved to history.' })
+
+      if (comparisonMetrics) {
+        yPos += 5
+        doc.setFontSize(14)
+        doc.text('Recommendation', 14, yPos)
+        yPos += 8
+        doc.setFontSize(10)
+        const splitText = doc.splitTextToSize(comparisonMetrics.recommendation.replace(/\*\*/g, ''), 180)
+        doc.text(splitText, 14, yPos)
+      }
+
+      doc.save('car-comparison.pdf')
+
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('success') : null) || 'Success',
+          description: 'Comparison exported as PDF',
+        })
+      }
+    } catch (error: any) {
+      console.error('PDF export error:', error)
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
+          description: error?.message || 'Failed to export PDF',
+          variant: 'destructive',
+        })
+      }
     }
   }
 
-  const handleLoadCompare = (entry: CompareHistoryEntry) => {
-    if (entry.mode === 'marketplace' && entry.ids?.length) {
-      router.replace(`/${locale}/compare?ids=${entry.ids.join(',')}`)
-    } else if (entry.mode === 'prediction' && entry.state?.cars?.length) {
-      setCars(entry.state.cars.map((c, i) => ({
-        id: `h-${i}-${Date.now()}`,
-        features: c.features as CarFeatures | null,
-        prediction: c.prediction as PredictionResponse | null,
-        loading: false,
-      })))
-      router.replace(`/${locale}/compare`)
+  // Share comparison link
+  const handleShare = async () => {
+    if (!allCarsHavePredictions) {
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
+          description: 'Please predict all cars before sharing',
+          variant: 'destructive',
+        })
+      }
+      return
+    }
+
+    try {
+      if (typeof window === 'undefined' || !navigator?.clipboard) {
+        throw new Error('Clipboard API not available')
+      }
+
+      const comparisonData = {
+        cars: cars.map(c => ({
+          features: c.features || null,
+          prediction: c.prediction ? {
+            predicted_price: c.prediction.predicted_price || 0,
+            confidence_range: c.prediction.confidence_range || 0,
+          } : null,
+        })),
+        timestamp: Date.now(),
+      }
+
+      // For now, copy to clipboard as JSON (could be enhanced with a shareable link API)
+      await navigator.clipboard.writeText(JSON.stringify(comparisonData, null, 2))
+
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('success') : null) || 'Success',
+          description: 'Comparison data copied to clipboard',
+        })
+      }
+    } catch (error: any) {
+      console.error('Share error:', error)
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
+          description: error?.message || 'Failed to share comparison',
+          variant: 'destructive',
+        })
+      }
+    }
+  }
+
+  // Save comparison (placeholder - would integrate with user dashboard API)
+  const handleSaveComparison = async () => {
+    if (!allCarsHavePredictions) {
+      if (toast?.toast) {
+        toast.toast({
+          title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
+          description: 'Please predict all cars before saving',
+          variant: 'destructive',
+        })
+      }
+      return
+    }
+
+    // TODO: Implement API call to save comparison to user dashboard
+    if (toast?.toast) {
+      toast.toast({
+        title: 'Coming Soon',
+        description: 'Save comparison feature will be available soon',
+      })
     }
   }
 
@@ -476,81 +508,6 @@ export default function ComparePage() {
     return Array.from(featureSet).sort()
   }, [listings, isMarketplaceComparison])
 
-  // Marketplace: getCarSpecs, chart data, spec rows
-  const listingSpecMaps = useMemo(
-    () => listings.map(l => getCarSpecs({
-      make: l.make,
-      model: l.model,
-      year: l.year,
-      transmission: l.transmission,
-      fuel_type: l.fuel_type,
-    })),
-    [listings]
-  )
-  const listingChartData = useMemo(() => {
-    if (!marketplaceMetrics || listings.length < 2) return []
-    return listings.map((l, i) => {
-      const s = listingSpecMaps[i]
-      const fe = s?.fuelEconomy
-      const avgMpg = fe ? (fe.city + fe.highway) / 2 : 0
-      return {
-        name: `${l.make} ${l.model}`,
-        shortName: `${l.make} ${l.model}`.slice(0, 14),
-        price: l.price,
-        horsepower: s?.horsepower,
-        fuelEconomy: fe ? mpgToL100km(avgMpg) : undefined,
-        fullName: `${l.make} ${l.model} ${l.year}`,
-        isBestDeal: i === marketplaceMetrics.bestDealIndex,
-        isMostExpensive: i === marketplaceMetrics.mostExpensiveIndex,
-      }
-    })
-  }, [listings, marketplaceMetrics, listingSpecMaps])
-  const listingSpecRows = useMemo(() => {
-    if (!marketplaceMetrics || listings.length < 2) return []
-    const rows = [
-      { label: 'Make & Model', values: listings.map(l => `${l.make} ${l.model}`) },
-      { label: 'Year', values: listings.map(l => l.year) },
-      { label: 'Mileage', values: listings.map(l => l.mileage), suffix: ' km', format: (v: string | number) => Number(v).toLocaleString() },
-      { label: 'Condition', values: listings.map(l => l.condition) },
-      { label: 'Fuel Type', values: listings.map(l => l.fuel_type) },
-      { label: 'Transmission', values: listings.map(l => l.transmission) },
-      { label: 'Horsepower', values: listings.map((_, i) => listingSpecMaps[i]?.horsepower ?? null), higherIsBetter: true, suffix: ' hp' },
-      { label: 'Fuel Economy (L/100km)', values: listings.map((_, i) => { const e = listingSpecMaps[i]?.fuelEconomy; return e ? formatFuelEconomyL100km(e.city, e.highway) : '—' }) },
-      { label: 'Price', values: listings.map(l => l.price), format: (v: string | number) => formatCurrency(Number(v)) },
-      { label: 'Savings vs Highest', values: marketplaceMetrics.savings, format: (v: string | number) => formatCurrency(Number(v)) },
-    ]
-    if (highlightDifferencesOnly) {
-      return rows.filter(r => new Set(r.values.map(x => String(x ?? ''))).size > 1)
-    }
-    return rows
-  }, [listings, marketplaceMetrics, listingSpecMaps, highlightDifferencesOnly])
-
-  // Export data for PDF (prediction or marketplace)
-  const exportData = useMemo(() => {
-    if (isMarketplaceComparison && marketplaceMetrics && listings.length >= 2) {
-      const best = marketplaceMetrics.bestDealIndex
-      return {
-        mode: 'marketplace' as const,
-        columnLabels: listings.map(l => `${l.make} ${l.model}`),
-        specRows: listingSpecRows,
-        summary: listings.map((l, i) => ({ name: `${l.make} ${l.model}`, price: l.price, savings: marketplaceMetrics.savings[i] ?? 0 })),
-        chartSummary: listingChartData,
-        recommendation: `Best value: ${listings[best]?.make} ${listings[best]?.model} at ${formatCurrency(listings[best]?.price ?? 0)}. Save ${formatCurrency(marketplaceMetrics.savings[best] ?? 0)} vs most expensive.`,
-      }
-    }
-    if (!isMarketplaceComparison && comparisonMetrics && specRows.length > 0) {
-      return {
-        mode: 'prediction' as const,
-        columnLabels: cars.map((c, i) => c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`),
-        specRows,
-        summary: cars.map((c, i) => ({ name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`, price: c.prediction?.predicted_price ?? 0, savings: comparisonMetrics.savings[i] ?? 0 })),
-        chartSummary: chartData,
-        recommendation: comparisonMetrics.recommendation || '',
-      }
-    }
-    return null
-  }, [isMarketplaceComparison, marketplaceMetrics, listings, listingSpecRows, listingChartData, comparisonMetrics, specRows, cars, chartData])
-
   return (
     <div className="container px-4 sm:px-6 lg:px-8 py-6 md:py-10">
       <div className="mx-auto max-w-7xl">
@@ -558,7 +515,7 @@ export default function ComparePage() {
         <div className="mb-6 md:mb-8 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 text-white">{(t && typeof t === 'function' ? t('title') : null) || 'Compare Cars'}</h1>
           <p className="text-sm md:text-base text-[#94a3b8]">
-            {isMarketplaceComparison
+            {isMarketplaceComparison 
               ? 'Compare marketplace listings side by side'
               : (t && typeof t === 'function' ? t('description') : null) || 'Compare multiple cars side by side'
             }
@@ -582,109 +539,368 @@ export default function ComparePage() {
               </Card>
             ) : (
               <div className="space-y-6">
-                {/* Marketplace: Summary, Chart, Specs, Value, Ownership */}
-                {marketplaceMetrics && listings.length >= 2 && (
-                  <>
-                    <CompareSummaryCards
-                      cars={listings.map((l, i) => ({ name: `${l.make} ${l.model}`, price: l.price, index: i }))}
-                      bestDealIndex={marketplaceMetrics.bestDealIndex}
-                      mostExpensiveIndex={marketplaceMetrics.mostExpensiveIndex}
-                      savings={marketplaceMetrics.savings}
-                    />
-                    <SmartRecommendations
-                      cars={listings.map((l, i) => {
-                        const fe = listingSpecMaps[i]?.fuelEconomy
-                        const avgMpg = fe ? (fe.city + fe.highway) / 2 : 0
-                        return {
-                          name: `${l.make} ${l.model}`,
-                          index: i,
-                          price: l.price,
-                          horsepower: listingSpecMaps[i]?.horsepower,
-                          fuelEconomy: fe ? mpgToL100km(avgMpg) : undefined,
-                          savings: marketplaceMetrics.savings[i],
-                          reliability: listingSpecMaps[i]?.reliabilityRating,
-                        }
-                      })}
-                      bestDealIndex={marketplaceMetrics.bestDealIndex}
-                      savings={marketplaceMetrics.savings}
-                      bestForPerformance={listings.reduce((b, _, i) => ((listingSpecMaps[i]?.horsepower ?? 0) > (listingSpecMaps[b]?.horsepower ?? 0) ? i : b), 0)}
-                      bestForEconomy={listings.reduce((b, _, i) => { const ea = listingSpecMaps[i]?.fuelEconomy; const eb = listingSpecMaps[b]?.fuelEconomy; const la = ea ? mpgToL100km((ea.city + ea.highway) / 2) : Infinity; const lb = eb ? mpgToL100km((eb.city + eb.highway) / 2) : Infinity; return la < lb ? i : b; }, 0)}
-                      bestForReliability={listings.reduce((b, _, i) => ((listingSpecMaps[i]?.reliabilityRating ?? 0) > (listingSpecMaps[b]?.reliabilityRating ?? 0) ? i : b), 0)}
-                    />
-                    {listingChartData.length > 0 && <ComparisonChart data={listingChartData} />}
-                    {listingSpecRows.length > 0 && (
-                      <Card className="border-[#2a2d3a] bg-[#1a1d29]/90">
-                        <CardHeader>
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <CardTitle className="text-white">Specifications & Comparison</CardTitle>
-                            <div className="flex items-center gap-2">
-                              <Switch id="mk-hl-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
-                              <Label htmlFor="mk-hl-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <SpecificationTable
-                            columnLabels={listings.map(l => `${l.make} ${l.model}`)}
-                            rows={listingSpecRows}
-                            bestDealIndex={marketplaceMetrics.bestDealIndex}
-                            mostExpensiveIndex={marketplaceMetrics.mostExpensiveIndex}
-                            highlightBestInRow
-                            showIcons={false}
-                          />
-                        </CardContent>
-                      </Card>
-                    )}
-                    <ValueAnalysisSection
-                      cars={listings.map((l, i) => ({ name: `${l.make} ${l.model}`, price: l.price, horsepower: listingSpecMaps[i]?.horsepower ?? 0, mileage: l.mileage }))}
-                      bestDealIndex={marketplaceMetrics.bestDealIndex}
-                    />
-                    <OwnershipCostsSection
-                      cars={listings.map((l, i) => ({
-                        name: `${l.make} ${l.model}`,
-                        price: l.price,
-                        mileage: l.mileage,
-                        fuelEconomyCity: listingSpecMaps[i]?.fuelEconomy?.city ?? 25,
-                        fuelEconomyHighway: listingSpecMaps[i]?.fuelEconomy?.highway ?? 33,
-                        fuelType: l.fuel_type,
-                      }))}
-                      bestDealIndex={marketplaceMetrics.bestDealIndex}
-                    />
-                  </>
-                )}
-                {/* Action Buttons - marketplace */}
-                <div className="flex flex-wrap gap-2 justify-end">
-                  {marketplaceMetrics && listings.length >= 2 && (
-                    <>
-                      <ExportPDF
-                        data={exportData}
-                        onSuccess={() => toast?.toast?.({ title: 'Exported', description: 'PDF saved.' })}
-                        onError={(e) => toast?.toast?.({ title: 'Export failed', description: e.message, variant: 'destructive' })}
-                        variant="outline"
-                        className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                      />
-                      <ShareComparison
-                        mode="marketplace"
-                        ids={listings.map(l => l.id)}
-                        onCopy={() => toast?.toast?.({ title: 'Link copied', description: 'Comparison link copied to clipboard.' })}
-                        variant="outline"
-                        className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                      />
-                      <CompareSaveAndHistory
-                        canSave={listings.length >= 2}
-                        onSave={handleSaveCompare}
-                        onLoad={handleLoadCompare}
-                        variant="outline"
-                        className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                      />
-                    </>
-                  )}
+                {/* Comparison Table */}
+                <Card className="border-[#2a2d3a] bg-[#1a1d29]">
+                  <CardHeader>
+                    <CardTitle className="text-white">Side-by-Side Comparison</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto -mx-4 px-4">
+                      <table className="w-full text-sm min-w-full">
+                        <thead>
+                          <tr className="border-b border-[#2a2d3a]">
+                            <th className="text-left p-3 text-[#94a3b8] font-semibold">Feature</th>
+                            {listings.map((listing, idx) => (
+                              <th
+                                key={listing.id}
+                                className={`text-center p-3 text-white font-semibold relative ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/10 border-l-2 border-r-2 border-green-500'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/10 border-l-2 border-r-2 border-red-500'
+                                    : ''
+                                }`}
+                              >
+                                {listing.make} {listing.model}
+                                {listing.id === marketplaceMetrics?.winnerId && (
+                                  <span className="absolute top-1 right-1">
+                                    <Trophy className="h-4 w-4 text-yellow-500" />
+                                  </span>
+                                )}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="text-white">
+                          {/* Images */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Image</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                <div className="relative h-32 w-full bg-gradient-to-br from-[#5B7FFF]/20 to-[#8B5CF6]/20 rounded-lg overflow-hidden">
+                                  {listing.image_url ? (
+                                    <Image
+                                      src={listing.image_url}
+                                      alt={`${listing.make} ${listing.model} ${listing.year}`}
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 768px) 100vw, 33vw"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-white/50" aria-label={`${listing.make} ${listing.model}`}>
+                                      No Image
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Year */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Year</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.year}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Price */}
+                          <tr className="border-b border-[#2a2d3a] bg-[#5B7FFF]/10">
+                            <td className="p-3 text-[#5B7FFF] font-bold">Price</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/10'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/10'
+                                    : ''
+                                }`}
+                              >
+                                <span className="text-[#5B7FFF] font-bold text-lg">
+                                  {formatCurrency(listing.price)}
+                                </span>
+                                {idx === marketplaceMetrics?.bestDealIndex && (
+                                  <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-500 text-xs font-semibold rounded">
+                                    Best Deal
+                                  </span>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Mileage */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Mileage</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.mileage.toLocaleString()} km
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Condition */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Condition</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.condition}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Fuel Type */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Fuel Type</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.fuel_type}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Transmission */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Transmission</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.transmission}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Color */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Color</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.color}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Location */}
+                          <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Location</td>
+                            {listings.map((listing, idx) => (
+                              <td
+                                key={listing.id}
+                                className={`p-3 text-center ${
+                                  idx === marketplaceMetrics?.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === marketplaceMetrics?.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                {listing.location_city || 'N/A'}
+                              </td>
+                            ))}
+                          </tr>
+
+                          {/* Features Checklist */}
+                          {allFeatures.length > 0 && (
+                            <>
+                              {allFeatures.map(feature => (
+                                <tr key={feature} className="border-b border-[#2a2d3a]">
+                                  <td className="p-3 text-[#94a3b8] font-medium">{feature}</td>
+                                  {listings.map((listing, idx) => (
+                                    <td
+                                      key={listing.id}
+                                      className={`p-3 text-center ${
+                                        idx === marketplaceMetrics?.bestDealIndex
+                                          ? 'bg-green-500/5'
+                                          : idx === marketplaceMetrics?.mostExpensiveIndex
+                                          ? 'bg-red-500/5'
+                                          : ''
+                                      }`}
+                                    >
+                                      {listing.features.includes(feature) ? (
+                                        <Check className="h-5 w-5 text-green-500 mx-auto" />
+                                      ) : (
+                                        <XIcon className="h-5 w-5 text-red-500 mx-auto" />
+                                      )}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </>
+                          )}
+
+                          {/* Price Difference */}
+                          <tr className="border-b border-[#2a2d3a] bg-[#2a2d3a]/30">
+                            <td className="p-3 text-[#94a3b8] font-medium">Price Difference vs Average</td>
+                            {listings.map((listing, idx) => {
+                              const diff = listing.price - (marketplaceMetrics?.avgPrice || 0)
+                              const isCheaper = diff < 0
+                              return (
+                                <td
+                                  key={listing.id}
+                                  className={`p-3 text-center ${
+                                    idx === marketplaceMetrics?.bestDealIndex
+                                      ? 'bg-green-500/5'
+                                      : idx === marketplaceMetrics?.mostExpensiveIndex
+                                      ? 'bg-red-500/5'
+                                      : ''
+                                  }`}
+                                >
+                                  <span className={`flex items-center justify-center gap-1 ${
+                                    isCheaper ? 'text-green-500' : diff > 0 ? 'text-red-500' : 'text-[#94a3b8]'
+                                  }`}>
+                                    {Math.abs(diff) > 1 && (
+                                      <>
+                                        {isCheaper ? (
+                                          <TrendingDown className="h-4 w-4" />
+                                        ) : (
+                                          <TrendingUp className="h-4 w-4" />
+                                        )}
+                                        {formatCurrency(Math.abs(diff))}
+                                        {isCheaper ? ' below avg' : ' above avg'}
+                                      </>
+                                    )}
+                                    {Math.abs(diff) <= 1 && (
+                                      <span className="text-[#94a3b8]">≈ Average</span>
+                                    )}
+                                  </span>
+                                </td>
+                              )
+                            })}
+                          </tr>
+
+                          {/* Savings */}
+                          <tr className="border-t-2 border-[#5B7FFF] bg-[#5B7FFF]/5">
+                            <td className="p-3 text-[#5B7FFF] font-bold">Savings vs Most Expensive</td>
+                            {listings.map((listing, idx) => {
+                              const savings = marketplaceMetrics?.savings[idx] || 0
+                              const isMostExpensive = idx === marketplaceMetrics?.mostExpensiveIndex
+                              return (
+                                <td
+                                  key={listing.id}
+                                  className={`p-3 text-center ${
+                                    idx === marketplaceMetrics?.bestDealIndex
+                                      ? 'bg-green-500/10'
+                                      : isMostExpensive
+                                      ? 'bg-red-500/10'
+                                      : ''
+                                  }`}
+                                >
+                                  {isMostExpensive ? (
+                                    <span className="text-[#94a3b8]">—</span>
+                                  ) : (
+                                    <span className="text-green-500 font-bold">
+                                      Save {formatCurrency(savings)}
+                                    </span>
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 justify-end">
                   <Button
-                    onClick={() => { if (typeof window !== 'undefined') window.print() }}
+                    onClick={async () => {
+                      try {
+                        if (typeof window === 'undefined') return
+                        const url = window.location.href
+                        await navigator.clipboard.writeText(url)
+                        if (toast?.toast) {
+                          toast.toast({
+                            title: 'Link copied',
+                            description: 'Comparison link copied to clipboard',
+                          })
+                        }
+                      } catch (error) {
+                        console.error('Failed to copy:', error)
+                      }
+                    }}
                     variant="outline"
                     className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
                   >
-                    <Download className="me-2 h-4 w-4" />
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Comparison
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (typeof window === 'undefined') return
+                      window.print()
+                    }}
+                    variant="outline"
+                    className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
                     Print
                   </Button>
                 </div>
@@ -749,134 +965,387 @@ export default function ComparePage() {
             </Button>
             {allCarsHavePredictions && hasMultipleCars && (
               <>
-                <ExportPDF
-                  data={exportData}
-                  onSuccess={() => toast?.toast?.({ title: 'Exported', description: 'PDF saved.' })}
-                  onError={(e) => toast?.toast?.({ title: 'Export failed', description: e.message, variant: 'destructive' })}
+                <Button
+                  onClick={handleExportPDF}
                   variant="outline"
                   className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                />
-                <ShareComparison
-                  mode="prediction"
-                  predictionState={{ cars: cars.map(c => ({ features: c.features, prediction: c.prediction })) }}
-                  onCopy={() => toast?.toast?.({ title: 'Link copied', description: 'Comparison link copied to clipboard.' })}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button
+                  onClick={handleShare}
                   variant="outline"
                   className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                />
-                <CompareSaveAndHistory
-                  canSave={allCarsHavePredictions && hasMultipleCars}
-                  onSave={handleSaveCompare}
-                  onLoad={handleLoadCompare}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+                <Button
+                  onClick={handleSaveComparison}
                   variant="outline"
                   className="border-[#2a2d3a] bg-[#1a1d29] hover:bg-[#2a2d3a] text-white"
-                />
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Save
+                </Button>
               </>
             )}
           </div>
         </div>
 
-        {/* Summary Cards */}
+        {/* Recommendation Section */}
         <AnimatePresence>
-          {allCarsHavePredictions && hasMultipleCars && comparisonMetrics && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6">
-              <CompareSummaryCards
-                cars={cars.map((c, i) => ({ name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`, price: c.prediction?.predicted_price || 0, index: i }))}
-                bestDealIndex={comparisonMetrics.bestDealIndex}
-                mostExpensiveIndex={comparisonMetrics.mostExpensiveIndex}
-                savings={comparisonMetrics.savings}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Smart Recommendations */}
-        <AnimatePresence>
-          {allCarsHavePredictions && hasMultipleCars && comparisonMetrics && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6">
-              <SmartRecommendations
-                cars={cars.map((c, i) => {
-                  const fe = specMaps[i]?.fuelEconomy
-                  const avgMpg = fe ? (fe.city + fe.highway) / 2 : 0
-                  return {
-                    name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`,
-                    index: i,
-                    price: c.prediction?.predicted_price || 0,
-                    horsepower: specMaps[i]?.horsepower,
-                    fuelEconomy: fe ? mpgToL100km(avgMpg) : undefined,
-                    savings: comparisonMetrics.savings[i],
-                    reliability: specMaps[i]?.reliabilityRating,
-                  }
-                })}
-                bestDealIndex={comparisonMetrics.bestDealIndex}
-                savings={comparisonMetrics.savings}
-                bestForPerformance={cars.reduce((best, c, i) => ((specMaps[i]?.horsepower ?? 0) > (specMaps[best]?.horsepower ?? 0) ? i : best), 0)}
-                bestForEconomy={cars.reduce((best, c, i) => { const ea = specMaps[i]?.fuelEconomy; const eb = specMaps[best]?.fuelEconomy; const la = ea ? mpgToL100km((ea.city + ea.highway) / 2) : Infinity; const lb = eb ? mpgToL100km((eb.city + eb.highway) / 2) : Infinity; return la < lb ? i : best; }, 0)}
-                bestForReliability={cars.reduce((best, c, i) => ((specMaps[i]?.reliabilityRating ?? 0) > (specMaps[best]?.reliabilityRating ?? 0) ? i : best), 0)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Comparison Charts (Price / Performance / Radar) */}
-        <AnimatePresence>
-          {chartData.length > 0 && hasMultipleCars && (
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="mb-6">
-              <ComparisonChart data={chartData} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Specifications &amp; Comparison Table */}
-        <AnimatePresence>
-          {allCarsHavePredictions && hasMultipleCars && comparisonMetrics && specRows.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 space-y-6">
-              <Card className="border-[#2a2d3a] bg-[#1a1d29]/90 backdrop-blur-sm overflow-visible">
+          {comparisonMetrics && comparisonMetrics.recommendation && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="border-[#5B7FFF] bg-gradient-to-br from-[#5B7FFF]/10 to-[#1a1d29] mb-6">
                 <CardHeader>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle className="text-white">Specifications & Comparison</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Switch id="highlight-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
-                      <Label htmlFor="highlight-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-[#5B7FFF]" />
+                    <CardTitle className="text-white">AI Recommendation</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <SpecificationTable
-                    columnLabels={cars.map((c, i) => c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`)}
-                    rows={specRows}
-                    bestDealIndex={comparisonMetrics.bestDealIndex}
-                    mostExpensiveIndex={comparisonMetrics.mostExpensiveIndex}
-                    highlightBestInRow
-                    showIcons
-                  />
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-[#94a3b8] whitespace-pre-line">
+                      {comparisonMetrics.recommendation.replace(/\*\*/g, '')}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
-
-              <ValueAnalysisSection
-                cars={cars.map((c, i) => ({
-                  name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`,
-                  price: c.prediction?.predicted_price || 0,
-                  horsepower: specMaps[i]?.horsepower ?? 0,
-                  mileage: c.features?.mileage ?? 0,
-                }))}
-                bestDealIndex={comparisonMetrics.bestDealIndex}
-              />
-
-              <OwnershipCostsSection
-                cars={cars.map((c, i) => ({
-                  name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`,
-                  price: c.prediction?.predicted_price || 0,
-                  mileage: c.features?.mileage ?? 0,
-                  fuelEconomyCity: specMaps[i]?.fuelEconomy?.city ?? 25,
-                  fuelEconomyHighway: specMaps[i]?.fuelEconomy?.highway ?? 33,
-                  fuelType: c.features?.fuel_type,
-                }))}
-                bestDealIndex={comparisonMetrics.bestDealIndex}
-              />
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Price Comparison Chart */}
+        <AnimatePresence>
+          {chartData.length > 0 && hasMultipleCars && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="border-[#2a2d3a] bg-[#1a1d29] mb-6">
+                <CardHeader>
+                  <CardTitle className="text-white">Price Comparison Chart</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3a" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#94a3b8"
+                        tick={{ fill: '#94a3b8' }}
+                      />
+                      <YAxis
+                        stroke="#94a3b8"
+                        tick={{ fill: '#94a3b8' }}
+                        tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1a1d29',
+                          border: '1px solid #2a2d3a',
+                          borderRadius: '8px',
+                          color: '#fff',
+                        }}
+                        formatter={(value: number, name: string, props: any) => [
+                          formatCurrency(value),
+                          props.payload.fullName,
+                        ]}
+                      />
+                      <Bar dataKey="price" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.isBestDeal
+                                ? '#10B981'
+                                : entry.isMostExpensive
+                                ? '#EF4444'
+                                : '#5B7FFF'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Comparison Table View (when all cars have predictions) */}
+        <AnimatePresence>
+          {allCarsHavePredictions && hasMultipleCars && comparisonMetrics && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="border-[#2a2d3a] bg-[#1a1d29] mb-6 hover:border-[#5B7FFF]/50 transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="text-white">Side-by-Side Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto -mx-4 px-4">
+                    <table className="w-full text-sm min-w-full">
+                      <thead>
+                        <tr className="border-b border-[#2a2d3a]">
+                          <th className="text-left p-3 text-[#94a3b8] font-semibold">Feature</th>
+                          {cars.map((car, idx) => (
+                            <th
+                              key={car.id}
+                              className={`text-center p-3 text-white font-semibold relative ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/10 border-l-2 border-r-2 border-green-500'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/10 border-l-2 border-r-2 border-red-500'
+                                  : ''
+                              }`}
+                            >
+                              Car {idx + 1}
+                              {idx === comparisonMetrics.bestDealIndex && (
+                                <span className="absolute top-1 right-1">
+                                  <Trophy className="h-4 w-4 text-green-500" />
+                                </span>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="text-white">
+                        <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Make & Model</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.features?.make || 'N/A'} {car.features?.model || ''}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Year</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.features?.year || 'N/A'}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Mileage (km)</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.features?.mileage ? car.features.mileage.toLocaleString() : 'N/A'}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Condition</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.features?.condition || 'N/A'}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr className="border-b border-[#2a2d3a]">
+                            <td className="p-3 text-[#94a3b8] font-medium">Fuel Type</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.features?.fuel_type || 'N/A'}
+                            </td>
+                          ))}
+                        </tr>
+                        <motion.tr
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                          className="border-b border-[#2a2d3a] bg-[#5B7FFF]/10"
+                        >
+                          <td className="p-3 text-[#5B7FFF] font-bold">Predicted Price</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/10'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/10'
+                                  : ''
+                              }`}
+                            >
+                              <span className="text-[#5B7FFF] font-bold text-lg">
+                                {formatCurrency(car.prediction?.predicted_price || 0)}
+                              </span>
+                              {idx === comparisonMetrics.bestDealIndex && (
+                                <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-500 text-xs font-semibold rounded">
+                                  Best Deal
+                                </span>
+                              )}
+                            </td>
+                          ))}
+                        </motion.tr>
+                        {/* Confidence % Row */}
+                        <tr className="border-b border-[#2a2d3a]">
+                          <td className="p-3 text-[#94a3b8] font-medium">Confidence</td>
+                          {cars.map((car, idx) => (
+                            <td
+                              key={car.id}
+                              className={`p-3 text-center ${
+                                idx === comparisonMetrics.bestDealIndex
+                                  ? 'bg-green-500/5'
+                                  : idx === comparisonMetrics.mostExpensiveIndex
+                                  ? 'bg-red-500/5'
+                                  : ''
+                              }`}
+                            >
+                              {car.prediction?.confidence_range ? (
+                                <span className={`font-medium ${
+                                  (car.prediction.confidence_range || 0) >= 80 ? 'text-green-500' :
+                                  (car.prediction.confidence_range || 0) >= 60 ? 'text-yellow-500' :
+                                  'text-red-500'
+                                }`}>
+                                  {car.prediction.confidence_range}%
+                                </span>
+                              ) : (
+                                <span className="text-[#94a3b8]">N/A</span>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                        {/* Price Difference Row */}
+                        <tr className="border-b border-[#2a2d3a] bg-[#2a2d3a]/30">
+                          <td className="p-3 text-[#94a3b8] font-medium">Price Difference vs Average</td>
+                          {cars.map((car, idx) => {
+                            const allPrices = cars.map(c => c.prediction?.predicted_price || 0)
+                            const avgPrice = allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length
+                            const diff = (car.prediction?.predicted_price || 0) - avgPrice
+                            const isCheaper = diff < 0
+
+                            return (
+                              <td
+                                key={car.id}
+                                className={`p-3 text-center ${
+                                  idx === comparisonMetrics.bestDealIndex
+                                    ? 'bg-green-500/5'
+                                    : idx === comparisonMetrics.mostExpensiveIndex
+                                    ? 'bg-red-500/5'
+                                    : ''
+                                }`}
+                              >
+                                <span className={`flex items-center justify-center gap-1 ${
+                                  isCheaper ? 'text-green-500' : diff > 0 ? 'text-red-500' : 'text-[#94a3b8]'
+                                }`}>
+                                  {Math.abs(diff) > 1 && (
+                                    <>
+                                      {isCheaper ? (
+                                        <TrendingDown className="h-4 w-4" />
+                                      ) : (
+                                        <TrendingUp className="h-4 w-4" />
+                                      )}
+                                      {formatCurrency(Math.abs(diff))}
+                                      {isCheaper ? ' below avg' : ' above avg'}
+                                    </>
+                                  )}
+                                  {Math.abs(diff) <= 1 && (
+                                    <span className="text-[#94a3b8]">≈ Average</span>
+                                  )}
+                                </span>
+                              </td>
+                            )
+                          })}
+                        </tr>
+                        {/* Total Savings Row */}
+                        <tr className="border-t-2 border-[#5B7FFF] bg-[#5B7FFF]/5">
+                          <td className="p-3 text-[#5B7FFF] font-bold">Savings vs Most Expensive</td>
+                          {cars.map((car, idx) => {
+                            const savings = comparisonMetrics.savings[idx]
+                            const isBestDeal = idx === comparisonMetrics.bestDealIndex
+                            const isMostExpensive = idx === comparisonMetrics.mostExpensiveIndex
+
+                            return (
+                              <td
+                                key={car.id}
+                                className={`p-3 text-center ${
+                                  isBestDeal
+                                    ? 'bg-green-500/10'
+                                    : isMostExpensive
+                                    ? 'bg-red-500/10'
+                                    : ''
+                                }`}
+                              >
+                                {isMostExpensive ? (
+                                  <span className="text-[#94a3b8]">—</span>
+                                ) : (
+                                  <span className="text-green-500 font-bold">
+                                    Save {formatCurrency(savings)}
+                                  </span>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Car Cards Grid */}
         <motion.div
@@ -899,12 +1368,12 @@ export default function ComparePage() {
                   whileHover={{ y: -5 }}
                 >
                   <Card
-                    className={`border-[#2a2d3a] bg-[#1a1d29] hover:border-[#5B7FFF]/50 transition-all duration-300 hover:shadow-lg ${
+                    className={`border-[#2a2d3a] bg-[#1a1d29] hover:border-[#5B7FFF]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#5B7FFF]/20 ${
                       isBestDeal && allCarsHavePredictions
-                        ? 'border-green-500 border-2 shadow-green-500/25 shadow-lg'
+                        ? 'border-green-500 border-2'
                         : isMostExpensive && allCarsHavePredictions
                         ? 'border-red-500 border-2'
-                        : 'hover:shadow-[#5B7FFF]/20'
+                        : ''
                     }`}
                   >
                     <CardHeader className="pb-3">
@@ -949,7 +1418,6 @@ export default function ComparePage() {
                           }
                         }}
                         loading={car.loading || false}
-                        hideVehicleType
                       />
                       {car.prediction && car.features && (
                         <div className="mt-4 pt-4 border-t border-[#2a2d3a] space-y-3">

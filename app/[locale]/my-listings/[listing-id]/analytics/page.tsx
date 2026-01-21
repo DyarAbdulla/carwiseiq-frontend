@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -37,7 +37,13 @@ export default function ListingAnalyticsPage() {
   const toastHook = useToast()
   const toast = toastHook || { toast: () => {} }
 
-  const loadAnalytics = useCallback(async () => {
+  useEffect(() => {
+    if (listingId) {
+      loadAnalytics()
+    }
+  }, [listingId])
+
+  const loadAnalytics = async () => {
     setLoading(true)
     try {
       const data = await apiClient.getListingAnalytics(listingId)
@@ -54,13 +60,7 @@ export default function ListingAnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }, [listingId, toast])
-
-  useEffect(() => {
-    if (listingId) {
-      loadAnalytics()
-    }
-  }, [listingId, loadAnalytics])
+  }
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -46,7 +46,16 @@ export default function SavedSearchesPage() {
   const [editEmailAlerts, setEditEmailAlerts] = useState(true)
   const [editFrequency, setEditFrequency] = useState('instant')
 
-  const loadSearches = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadSearches()
+  }, [isAuthenticated, authLoading])
+
+  const loadSearches = async () => {
     if (!isAuthenticated) return
 
     setLoading(true)
@@ -62,16 +71,7 @@ export default function SavedSearchesPage() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, toast])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!isAuthenticated) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadSearches()
-  }, [isAuthenticated, authLoading, loadSearches, router, locale])
+  }
 
   const handleDelete = async (searchId: number) => {
     if (!confirm('Are you sure you want to delete this saved search?')) return

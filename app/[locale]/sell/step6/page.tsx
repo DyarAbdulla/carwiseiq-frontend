@@ -14,7 +14,7 @@ import { CheckCircle2, Edit } from 'lucide-react'
 
 export default function SellStep6Page() {
   const [listingData, setListingData] = useState<any>(null)
-  const [agreed, setAgreed] = useState({ terms: false, accurate: false })
+  const [agreed, setAgreed] = useState({ terms: false, accurate: false, training: false })
   const [publishing, setPublishing] = useState(false)
   const router = useRouter()
   const locale = useLocale()
@@ -31,48 +31,6 @@ export default function SellStep6Page() {
 
     setListingData({ location, images, carDetails, contact })
   }, [uploadedImages, ctxCar, ctxLoc])
-
-  const isEditMode = typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem('edit_listing_id')
-
-  const handleSaveChanges = async () => {
-    if (!agreed.terms || !agreed.accurate) {
-      toast({ title: 'Agreement required', description: 'Please agree to all required terms', variant: 'destructive' })
-      return
-    }
-    if (!listingId) return
-    const cd = listingData?.carDetails || {}
-    const co = listingData?.contact || {}
-    const loc = listingData?.location || {}
-    setPublishing(true)
-    try {
-      await apiClient.updateDraftListing(listingId, {
-        make: cd.make || null, model: cd.model || null, year: cd.year ? parseInt(cd.year) : null, trim: cd.trim || null,
-        price: cd.price != null ? parseFloat(cd.price) : null, mileage: cd.mileage != null ? parseFloat(cd.mileage) : null,
-        mileage_unit: cd.mileage_unit || 'km', condition: cd.condition || null, transmission: cd.transmission || null,
-        fuel_type: cd.fuel_type || null, color: cd.color || null, features: cd.features || [],
-        description: cd.description || null, vin: cd.vin || null,
-        location_country: loc.country || null, location_state: loc.state || null, location_city: loc.city || null,
-        phone: co.phone || null, phone_country_code: co.phone_country_code || '+964',
-        show_phone_to_buyers_only: co.show_phone_to_buyers_only ?? true,
-        preferred_contact_methods: co.preferred_contact_methods || [], availability: co.availability || null,
-        exact_address: co.exact_address || null,
-      })
-      toast({ title: 'Saved', description: 'Your changes have been saved' })
-      sessionStorage.removeItem('edit_listing_id')
-      sessionStorage.removeItem('sell_location')
-      sessionStorage.removeItem('sell_images')
-      sessionStorage.removeItem('sell_listing_id')
-      sessionStorage.removeItem('sell_ai_detected')
-      sessionStorage.removeItem('sell_car_details')
-      sessionStorage.removeItem('sell_contact')
-      clearDraft()
-      router.push(`/${locale}/buy-sell/${listingId}`)
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to save', variant: 'destructive' })
-    } finally {
-      setPublishing(false)
-    }
-  }
 
   const handlePublish = async () => {
     if (!agreed.terms || !agreed.accurate) {
@@ -110,7 +68,6 @@ export default function SellStep6Page() {
       sessionStorage.removeItem('sell_ai_detected')
       sessionStorage.removeItem('sell_car_details')
       sessionStorage.removeItem('sell_contact')
-      sessionStorage.removeItem('edit_listing_id')
       clearDraft()
       router.push(`/${locale}/sell/success?id=${listingId}`)
     } catch (error: any) {
@@ -227,9 +184,6 @@ export default function SellStep6Page() {
                   <p>Condition: {listingData.carDetails?.condition || 'N/A'}</p>
                   <p>Transmission: {listingData.carDetails?.transmission || 'N/A'}</p>
                   <p>Fuel: {listingData.carDetails?.fuel_type || 'N/A'}</p>
-                  {listingData.carDetails?.fuel_consumption_l100km != null && listingData.carDetails?.fuel_consumption_l100km !== '' && (
-                    <p>Fuel consumption: {listingData.carDetails.fuel_consumption_l100km} L/100km</p>
-                  )}
                 </div>
                 {listingData.carDetails?.description && (
                   <p className="text-gray-300 mt-4">{listingData.carDetails.description}</p>
@@ -273,35 +227,30 @@ export default function SellStep6Page() {
                 />
                 <span className="text-gray-300 text-sm">I confirm this information is accurate *</span>
               </label>
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <Checkbox
+                  checked={agreed.training}
+                  onCheckedChange={(checked) => setAgreed({ ...agreed, training: checked as boolean })}
+                />
+                <span className="text-gray-300 text-sm">I allow this data to be used for AI training (anonymized)</span>
+              </label>
             </div>
 
             <div className="flex gap-4 pt-4">
-              {isEditMode ? (
-                <Button
-                  onClick={handleSaveChanges}
-                  disabled={!agreed.terms || !agreed.accurate || publishing}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  {publishing ? 'Saving...' : 'Save changes'}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    onClick={handleSaveDraft}
-                    variant="outline"
-                    className="flex-1 border-gray-600 text-gray-300"
-                  >
-                    Save as Draft
-                  </Button>
-                  <Button
-                    onClick={handlePublish}
-                    disabled={!agreed.terms || !agreed.accurate || publishing}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                  >
-                    {publishing ? 'Publishing...' : 'Publish Listing'}
-                  </Button>
-                </>
-              )}
+              <Button
+                onClick={handleSaveDraft}
+                variant="outline"
+                className="flex-1 border-gray-600 text-gray-300"
+              >
+                Save as Draft
+              </Button>
+              <Button
+                onClick={handlePublish}
+                disabled={!agreed.terms || !agreed.accurate || publishing}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {publishing ? 'Publishing...' : 'Publish Listing'}
+              </Button>
             </div>
           </CardContent>
         </Card>

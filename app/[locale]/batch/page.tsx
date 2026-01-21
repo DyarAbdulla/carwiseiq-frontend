@@ -252,7 +252,10 @@ export default function BatchPage() {
 
   // Download sample CSV
   const handleDownloadSample = () => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') {
+      console.warn('Download is only available in the browser')
+      return
+    }
 
     try {
       const sampleData = [
@@ -414,7 +417,10 @@ export default function BatchPage() {
   }
 
   const handleProcess = async () => {
+    console.log('🚀 [Batch] Process button clicked')
+
     if (!file) {
+      console.log('❌ [Batch] No file selected')
       if (toast?.toast) {
         toast.toast({
           title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
@@ -425,15 +431,23 @@ export default function BatchPage() {
       return
     }
 
+    console.log('📄 [Batch] File selected:', file.name, 'Size:', file.size, 'bytes')
     setLoading(true)
     setResults([])
     setProgress(0)
     setCurrentProcessing({ current: 0, total: 0 })
 
     try {
+      console.log('📊 [Batch] Starting CSV parsing...')
+
+      // Read file content for parsing
       const reader = new FileReader()
       reader.onload = async (e) => {
         const content = e.target?.result as string
+        console.log('📄 [Batch] Raw CSV content (first 500 chars):')
+        console.log(content.substring(0, 500))
+        console.log('📄 [Batch] Raw CSV lines:', content.split('\n').length)
+
         setProgress(25)
 
         // Parse the string content instead of File object
@@ -442,6 +456,14 @@ export default function BatchPage() {
           skipEmptyLines: true,
           dynamicTyping: false,
           complete: async (parseResults) => {
+            console.log('✅ [Batch] CSV parsed successfully')
+            console.log('📋 [Batch] Total rows:', parseResults.data.length)
+            console.log('🔍 [Batch] Parse results meta:', parseResults.meta)
+            console.log('🔍 [Batch] Headers detected:', parseResults.meta?.fields)
+            console.log('🔍 [Batch] First 3 rows (raw):', parseResults.data.slice(0, 3))
+            console.log('🔍 [Batch] Sample row keys:', parseResults.data[0] ? Object.keys(parseResults.data[0]) : 'No data')
+            console.log('🔍 [Batch] Sample row values:', parseResults.data[0])
+
             // Set preview (first 5 rows)
             setCsvPreview(parseResults.data.slice(0, 5))
             setProgress(50)
@@ -461,10 +483,29 @@ export default function BatchPage() {
             return
           }
 
+          // Filter and log each row
           const allRows = parseResults.data as any[]
-          const validRows = allRows.filter((row: any) => {
-            return !!(row.year && row.make && row.model)
+          console.log('🔍 [Batch] Starting row filtering...')
+          console.log('🔍 [Batch] Total raw rows:', allRows.length)
+
+          const validRows = allRows.filter((row: any, index: number) => {
+            const hasYear = !!row.year
+            const hasMake = !!row.make
+            const hasModel = !!row.model
+            const isValid = hasYear && hasMake && hasModel
+
+            if (index < 3) {
+              console.log(`🔍 [Batch] Row ${index + 1}:`, row)
+              console.log(`  - year: "${row.year}" (${hasYear})`)
+              console.log(`  - make: "${row.make}" (${hasMake})`)
+              console.log(`  - model: "${row.model}" (${hasModel})`)
+              console.log(`  - Valid: ${isValid}`)
+            }
+
+            return isValid
           })
+
+          console.log('🔍 [Batch] Valid rows after filter:', validRows.length)
 
           const cars: CarFeatures[] = validRows.map((row: any) => ({
               year: parseInt(row.year),
@@ -478,7 +519,11 @@ export default function BatchPage() {
               location: row.location || 'Unknown',
             }))
 
+          console.log('🚗 [Batch] Valid cars parsed:', cars.length)
+          console.log('📦 [Batch] First car sample:', cars[0])
+
           if (cars.length === 0) {
+            console.log('❌ [Batch] No valid cars found')
             if (toast?.toast) {
               toast.toast({
                 title: (tCommon && typeof tCommon === 'function' ? tCommon('error') : null) || 'Error',
@@ -495,11 +540,19 @@ export default function BatchPage() {
           setProgress(60)
           setCurrentProcessing({ current: 0, total: cars.length })
 
+          // Process predictions with progress updates
+          console.log('🔮 [Batch] Sending batch prediction request...')
+          console.log('📊 [Batch] Number of cars to predict:', cars.length)
+
+          // Use batch endpoint with progress tracking simulation
           try {
             const response = await apiClient.predictBatch(cars)
             setProgress(100)
             setCurrentProcessing({ current: cars.length, total: cars.length })
             setResults(response)
+
+            console.log('✅ [Batch] Predictions received:', response.length)
+            console.log('💰 [Batch] First prediction sample:', response[0])
 
             if (toast?.toast) {
               toast.toast({
@@ -554,6 +607,7 @@ export default function BatchPage() {
       setProgress(0)
       setCurrentProcessing({ current: 0, total: 0 })
     } finally {
+      console.log('🏁 [Batch] Process completed, loading:', false)
       setLoading(false)
     }
   }
@@ -571,7 +625,11 @@ export default function BatchPage() {
   }
 
   const handleExportCSV = () => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') {
+      console.warn('Export is only available in the browser')
+      return
+    }
+
     if (sortedResults.length === 0) {
       if (toast?.toast) {
         toast.toast({
@@ -623,7 +681,11 @@ export default function BatchPage() {
   }
 
   const handleExportExcel = async () => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') {
+      console.warn('Export is only available in the browser')
+      return
+    }
+
     if (sortedResults.length === 0) {
       if (toast?.toast) {
         toast.toast({
@@ -1291,7 +1353,11 @@ export default function BatchPage() {
                 timestamp: Date.now(),
               })
             }}
-            onViewDetails={() => {}}
+            onViewDetails={(index) => {
+              // Could open a modal or navigate to details
+              const result = sortedResults[index]
+              console.log('View details for:', result)
+            }}
           />
         )}
       </div>

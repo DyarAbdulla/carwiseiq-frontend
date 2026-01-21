@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import Link from 'next/link'
@@ -14,8 +14,7 @@ import {
   Menu,
   X,
   Shield,
-  Bell,
-  Car
+  Bell
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
@@ -35,39 +34,32 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const locale = useLocale()
   const { toast } = useToast()
 
-  const isLoginPage = typeof pathname === 'string' && pathname.endsWith('/admin/login')
+  useEffect(() => {
+    checkAuth()
+  }, [])
 
-  const checkAuth = useCallback(async () => {
+  const checkAuth = async () => {
     try {
-      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
+      const adminToken = localStorage.getItem('admin_token')
       if (!adminToken) {
         router.push(`/${locale}/admin/login`)
         return
       }
       const admin = await apiClient.getAdminMe()
-      const storedInfo = typeof window !== 'undefined' ? localStorage.getItem('admin_info') : null
+      const storedInfo = localStorage.getItem('admin_info')
       if (storedInfo) {
         setAdminInfo(JSON.parse(storedInfo))
       } else {
         setAdminInfo({ name: admin.name, role: admin.role })
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('admin_info', JSON.stringify({ name: admin.name, role: admin.role }))
-        }
+        localStorage.setItem('admin_info', JSON.stringify({ name: admin.name, role: admin.role }))
       }
       setLoading(false)
     } catch (error) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_info')
-      }
-      router.push(`/${locale}/admin/login`)
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_info')
+      router.push('/admin/login')
     }
-  }, [router, locale])
-
-  useEffect(() => {
-    if (isLoginPage) return
-    checkAuth()
-  }, [pathname, isLoginPage, checkAuth])
+  }
 
   const handleLogout = async () => {
     try {
@@ -75,25 +67,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } catch (error) {
       // Ignore errors
     } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_info')
-      }
-      router.push(`/${locale}/admin/login`)
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_info')
+      router.push('/admin/login')
     }
   }
 
   const menuItems = [
     { href: `/${locale}/admin/dashboard`, label: 'Dashboard', icon: LayoutDashboard },
-    { href: `/${locale}/admin/listings`, label: 'Listings', icon: Car },
     { href: `/${locale}/admin/feedback`, label: 'Feedback Management', icon: MessageSquare },
     { href: `/${locale}/admin/users`, label: 'User Management', icon: Users },
     { href: `/${locale}/admin/settings`, label: 'System Settings', icon: Settings },
     { href: `/${locale}/admin/reports`, label: 'Reports', icon: FileText },
   ]
-
-  // /admin/login is public: render immediately, no admin auth, no Loading. Avoids checkAuth returning without setLoading(false).
-  if (isLoginPage) return <>{children}</>
 
   if (loading) {
     return (

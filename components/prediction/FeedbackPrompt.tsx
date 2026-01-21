@@ -94,18 +94,21 @@ export function FeedbackPrompt({
     try {
       setSubmitting(true)
       setError(null)
-
+      
+      console.log('Submitting feedback:', { prediction_id: predictionId, ...feedback })
+      
       const result = await apiClient.submitFeedback({
         prediction_id: predictionId,
-        ...feedback,
-        feedback_type: feedback.feedback_type as 'accurate' | 'inaccurate' | 'partial' | undefined,
+        ...feedback
       })
 
+      console.log('Feedback submitted successfully:', result)
+      
       setFeedbackSubmitted(true)
       
       // Show success toast
-      if (toast) {
-        toast({
+      if (toast?.toast) {
+        toast.toast({
           title: 'Thank you!',
           description: 'Your feedback helps us improve.',
           variant: 'default',
@@ -121,8 +124,8 @@ export function FeedbackPrompt({
       setError(errorMessage)
       
       // Show error toast
-      if (toast) {
-        toast({
+      if (toast?.toast) {
+        toast.toast({
           title: 'Error',
           description: errorMessage,
           variant: 'destructive',

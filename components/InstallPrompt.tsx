@@ -48,7 +48,10 @@ export default function InstallPrompt() {
           localStorage.removeItem('pwa-install-dismissed')
         }
       }
-    } catch {}
+    } catch (error) {
+      // localStorage access failed, ignore
+      console.warn('[PWA Install] Failed to check dismissal status:', error)
+    }
   }, [])
 
   // Listen for beforeinstallprompt event
@@ -88,13 +91,19 @@ export default function InstallPrompt() {
       const { outcome } = await deferredPrompt.userChoice
 
       if (outcome === 'accepted') {
+        console.log('[PWA Install] User accepted the install prompt')
         setIsInstalled(true)
         setIsVisible(false)
       } else {
+        console.log('[PWA Install] User dismissed the install prompt')
         handleDismiss()
       }
+
+      // Clear the deferred prompt
       setDeferredPrompt(null)
-    } catch {}
+    } catch (error) {
+      console.error('[PWA Install] Error showing install prompt:', error)
+    }
   }
 
   // Handle dismiss button click
@@ -107,7 +116,9 @@ export default function InstallPrompt() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('pwa-install-dismissed', Date.now().toString())
       }
-    } catch {}
+    } catch (error) {
+      console.warn('[PWA Install] Failed to save dismissal:', error)
+    }
   }
 
   // Don't show if already installed, dismissed, or no prompt available

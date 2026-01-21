@@ -87,7 +87,7 @@ export function CookieConsent() {
                   <h3 className="text-white font-semibold mb-1">Cookie Consent</h3>
                   <p className="text-sm text-[#94a3b8]">
                     We use cookies to enhance your browsing experience, analyze site traffic, and personalize content.
-                    By clicking &quot;Accept All&quot;, you consent to our use of cookies.{' '}
+                    By clicking "Accept All", you consent to our use of cookies.{' '}
                     <button
                       onClick={() => setShowSettings(true)}
                       className="text-blue-500 hover:underline"

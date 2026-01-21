@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,7 +45,11 @@ export function SimilarCarsRecommendations({
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const loadSimilarCars = useCallback(async () => {
+  useEffect(() => {
+    loadSimilarCars()
+  }, [listingId, make, model, year, price])
+
+  const loadSimilarCars = async () => {
     setLoading(true)
     try {
       // Search for similar cars: same make/model, different year, similar price range
@@ -83,11 +87,7 @@ export function SimilarCarsRecommendations({
     } finally {
       setLoading(false)
     }
-  }, [listingId, make, model, year, price])
-
-  useEffect(() => {
-    loadSimilarCars()
-  }, [loadSimilarCars])
+  }
 
   const visibleCars = similarCars.slice(currentIndex, currentIndex + 4)
   const canScrollLeft = currentIndex > 0
@@ -119,9 +119,8 @@ export function SimilarCarsRecommendations({
               onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
               disabled={!canScrollLeft}
               className="text-white hover:bg-[#2a2d3a]"
-              aria-label="Previous"
             >
-              <ChevronLeft className="h-4 w-4 rtl:scale-x-[-1]" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -129,9 +128,8 @@ export function SimilarCarsRecommendations({
               onClick={() => setCurrentIndex(Math.min(similarCars.length - 4, currentIndex + 1))}
               disabled={!canScrollRight}
               className="text-white hover:bg-[#2a2d3a]"
-              aria-label="Next"
             >
-              <ChevronRight className="h-4 w-4 rtl:scale-x-[-1]" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

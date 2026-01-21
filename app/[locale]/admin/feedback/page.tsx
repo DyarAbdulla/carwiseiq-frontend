@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -34,18 +34,17 @@ export default function FeedbackManagementPage() {
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const loadFeedback = useCallback(async () => {
+  useEffect(() => {
+    loadFeedback()
+  }, [page, filters])
+
+  const loadFeedback = async () => {
     setLoading(true)
     try {
       const data = await apiClient.getFeedbackList({
         page,
         page_size: pageSize,
-        rating: filters.rating ? parseInt(filters.rating, 10) : undefined,
-        accuracy: filters.accuracy || undefined,
-        make: filters.make || undefined,
-        search: filters.search || undefined,
-        date_from: filters.date_from || undefined,
-        date_to: filters.date_to || undefined,
+        ...filters,
       })
       setFeedback(data.items || [])
       setTotal(data.total || 0)
@@ -54,11 +53,7 @@ export default function FeedbackManagementPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, filters])
-
-  useEffect(() => {
-    loadFeedback()
-  }, [loadFeedback])
+  }
 
   const handleViewDetail = async (feedbackId: number) => {
     try {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -28,7 +28,11 @@ export default function UserManagementPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { toast } = useToast()
 
-  const loadUsers = useCallback(async () => {
+  useEffect(() => {
+    loadUsers()
+  }, [page, search])
+
+  const loadUsers = async () => {
     setLoading(true)
     try {
       const data = await apiClient.getUsersList({
@@ -48,11 +52,7 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, toast])
-
-  useEffect(() => {
-    loadUsers()
-  }, [loadUsers])
+  }
 
   const handleDelete = async () => {
     if (!selectedUser) return

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -28,7 +28,16 @@ export default function NotificationSettingsPage() {
     frequency: 'instant'
   })
 
-  const loadSettings = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      router.push(`/${locale}/login`)
+      return
+    }
+    loadSettings()
+  }, [isAuthenticated, authLoading])
+
+  const loadSettings = async () => {
     if (!isAuthenticated) return
 
     setLoading(true)
@@ -51,16 +60,7 @@ export default function NotificationSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, toast])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!isAuthenticated) {
-      router.push(`/${locale}/login`)
-      return
-    }
-    loadSettings()
-  }, [isAuthenticated, authLoading, loadSettings, router, locale])
+  }
 
   const handleSave = async () => {
     if (!isAuthenticated) return

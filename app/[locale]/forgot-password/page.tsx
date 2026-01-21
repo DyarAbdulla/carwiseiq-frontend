@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Mail, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/use-auth'
+import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { LoadingButton } from '@/components/common/LoadingButton'
 
@@ -17,7 +17,6 @@ export default function ForgotPasswordPage() {
   const router = useRouter()
   const locale = useLocale()
   const { toast } = useToast()
-  const { forgotPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
@@ -27,7 +26,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(true)
 
     try {
-      await forgotPassword(email, locale)
+      await apiClient.forgotPassword(email)
       setSent(true)
       toast({
         title: 'Reset link sent',
@@ -61,7 +60,7 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <div className="space-y-4">
               <p className="text-sm text-[#94a3b8]">
-                If an account with that email exists, we&apos;ve sent a password reset link.
+                If an account with that email exists, we've sent a password reset link.
                 Please check your inbox and spam folder.
               </p>
               <Button

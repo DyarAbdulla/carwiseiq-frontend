@@ -14,20 +14,22 @@ export interface CarFeatures {
   fuel_type: string
   location: string
   color?: string
-  /** Vehicle type (Sedan, SUV, etc.); not used by model, for UX only */
-  vehicle_type?: string
 }
 
 // ============================================================================
-// Sell car prediction (legacy /api/sell/predict) - minimal types for api.ts
+// Sell Car Types (ARCHIVED - Removed for Buy&Sell migration)
 // ============================================================================
-export interface SellCarRequest {
-  [key: string]: unknown
-}
-export interface SellCarResponse {
-  predicted_price?: number
-  [key: string]: unknown
-}
+// These types have been archived and will be migrated to the new Buy&Sell section
+// Archived on: [Current Date]
+// Location: archive/sell/frontend/types_sell.ts (if needed for reference)
+
+// ARCHIVED INTERFACES:
+// - SellCarRequest
+// - SellAdjustment
+// - RecommendedPrice
+// - ConditionAnalysis
+// - MarketComparison (sell-specific)
+// - SellCarResponse
 
 export interface PredictionRequest {
   features: CarFeatures
@@ -296,8 +298,6 @@ export interface SellDraftImage {
   id: string
   file?: File
   previewUrl: string
-  /** True when the file is a video (MP4, WebM, MOV) */
-  isVideo?: boolean
 }
 
 export interface SellDraftUploadedImage {
