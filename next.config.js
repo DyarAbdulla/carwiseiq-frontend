@@ -1,7 +1,11 @@
-const { setupDevPlatform } = require('@cloudflare/next-on-pages/next-dev')
-
+// Only setup dev platform in development (not during production builds)
 if (process.env.NODE_ENV === 'development') {
-  setupDevPlatform()
+  try {
+    const { setupDevPlatform } = require('@cloudflare/next-on-pages/next-dev')
+    setupDevPlatform()
+  } catch (e) {
+    // Ignore if wrangler is not available (e.g., in CI/CD)
+  }
 }
 
 const withNextIntl = require('next-intl/plugin')(
