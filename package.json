@@ -12,6 +12,7 @@
     "dev:clean": "npm run clean:win && npx next dev -H 0.0.0.0",
     "build": "npm run clean:win && npx next build",
     "pages:build": "npx @cloudflare/next-on-pages",
+    "build:cloudflare": "npm run build && npm run pages:build",
     "start": "npx next start",
     "lint": "npx next lint"
   },
@@ -43,7 +44,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "lucide-react": "^0.303.0",
-    "next": "14.0.4",
+    "next": "^14.3.0",
     "next-intl": "^3.26.5",
     "papaparse": "^5.4.1",
     "qrcode": "^1.5.4",
@@ -66,7 +67,7 @@
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
-    "eslint-config-next": "14.0.4",
+    "eslint-config-next": "^14.3.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
