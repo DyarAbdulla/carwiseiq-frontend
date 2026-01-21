@@ -11,6 +11,9 @@ node_modules/
 /out/
 .next
 .next-cache
+.next/cache/
+.next/cache/**
+cache/
 
 # Production
 /build

@@ -143,10 +143,9 @@ const nextConfig = {
       ],
     }
 
-    // Disable filesystem cache in dev to prevent cache corruption issues
-    if (dev) {
-      config.cache = false
-    }
+    // Disable filesystem cache to prevent cache corruption and reduce build size
+    // This prevents .next/cache from growing too large (Cloudflare Pages 25MB limit)
+    config.cache = false
 
     // Only apply custom splitChunks in production builds to avoid vendor-chunks errors in dev
     if (!dev && !isServer) {
