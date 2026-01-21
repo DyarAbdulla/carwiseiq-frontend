@@ -1,0 +1,937 @@
+{
+  "languages": {
+    "en": "English",
+    "ar": "العربية",
+    "ku": "کوردی"
+  },
+  "common": {
+    "appName": "CarWiseIQ",
+    "appNameShort": "CarWiseIQ",
+    "tagline": "AI-Powered Car Pricing",
+    "getStarted": "Get Started",
+    "getPriceNow": "Get Price Now",
+    "learnMore": "Learn More",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "export": "Export",
+    "download": "Download",
+    "clear": "Clear",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "comingSoon": "Coming Soon",
+    "pageNotFound": "Page Not Found",
+    "pageNotFoundMessage": "The page you are looking for does not exist or has been moved.",
+    "goHome": "Go Home",
+    "browseCars": "Browse Cars",
+    "themeLight": "Switch to light mode",
+    "themeDark": "Switch to dark mode",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language",
+    "errorTitle": "Something went wrong!",
+    "errorMessage": "An unexpected error occurred",
+    "tryAgain": "Try again"
+  },
+  "footer": {
+    "brand": "CarWiseIQ",
+    "description": "AI-powered car pricing with advanced machine learning",
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "legal": "Legal",
+    "predict": "Predict",
+    "compare": "Compare",
+    "budget": "Budget Finder",
+    "support": "Support & Contact",
+    "docs": "Documentation",
+    "stats": "Statistics",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "CarWiseIQ. All rights reserved.",
+    "poweredBy": "Powered by AI & Machine Learning"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Home",
+    "buySell": "Buy & Sell",
+    "favorites": "Favorites",
+    "predict": "Predict",
+    "batch": "Batch",
+    "compare": "Compare",
+    "budget": "Budget Finder",
+    "stats": "Stats",
+    "history": "History",
+    "docs": "Docs",
+    "sellCar": "Sell Car",
+    "messages": "Messages"
+  },
+  "support": {
+    "title": "How Can We Help You?",
+    "subtitle": "Our team is available to assist with pricing, buying, selling, and technical questions across Iraq & Kurdistan. Reach out anytime.",
+    "searchPlaceholder": "Search for quick help...",
+    "phoneSupport": {
+      "title": "Phone Support",
+      "description": "Call us directly."
+    },
+    "whatsappSupport": {
+      "title": "WhatsApp Support",
+      "description": "Both numbers available on WhatsApp."
+    },
+    "emailSupport": {
+      "title": "Email Support",
+      "sendLink": "Send an email →"
+    },
+    "liveChat": {
+      "title": "Live Chat",
+      "description": "Chat with us on WhatsApp for instant help.",
+      "button": "Start Chat"
+    },
+    "contactForm": {
+      "title": "Send us a message",
+      "subtitle": "We typically respond within 24 hours.",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "phone": "Phone",
+      "phonePlaceholder": "e.g. 07701234567",
+      "subject": "Subject",
+      "subjectPlaceholder": "Select a subject",
+      "message": "Message",
+      "messagePlaceholder": "How can we help?",
+      "submit": "Submit",
+      "sending": "Sending...",
+      "successTitle": "Message sent successfully",
+      "successMessage": "We'll get back to you as soon as possible.",
+      "sendAnother": "Send another message"
+    },
+    "subjectOptions": {
+      "generalInquiry": "General Inquiry",
+      "pricePrediction": "Price Prediction",
+      "sellingCar": "Selling a Car",
+      "buyingCar": "Buying a Car",
+      "technicalIssue": "Technical Issue",
+      "partnership": "Partnership",
+      "other": "Other"
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "subtitle": "Quick answers about pricing, selling, and coverage.",
+      "q1": "How does the car price prediction work?",
+      "a1": "Our AI model analyzes thousands of car listings and uses factors like make, model, year, mileage, condition, and location to estimate market value. You get a predicted price range with a confidence score to help you make informed decisions.",
+      "q2": "How do I sell my car through your platform?",
+      "a2": "Go to the Sell section, enter your car details, upload photos, set your price (you can use our prediction as a guide), and publish. Buyers can contact you via message or phone. We serve Erbil, Baghdad, Sulaymaniyah, and the wider Iraq & Kurdistan region.",
+      "q3": "How accurate is the price prediction?",
+      "a3": "Our model is trained on real market data and typically provides estimates within a reasonable range of actual sale prices. Accuracy depends on data quality and market conditions. Use the confidence meter and price range as a guide, and consider getting a professional inspection for high-value cars.",
+      "q4": "Which areas do you cover?",
+      "a4": "We operate across Iraq and the Kurdistan region, including Erbil, Baghdad, and Sulaymaniyah. Price predictions and marketplace listings are available for these areas. If you're outside these cities, contact us to check availability.",
+      "q5": "How can I get support in Arabic or Kurdish?",
+      "a5": "Our team is fluent in Arabic, Kurdish, and English. Contact us via WhatsApp, phone, or email in your preferred language. We're here to help with pricing, buying, selling, or any technical questions."
+    },
+    "hours": {
+      "title": "Support hours",
+      "schedule": "Sunday – Thursday: 9:00 AM – 6:00 PM (Iraq / Kurdistan, GMT+3)",
+      "note": "Email and WhatsApp may be checked outside these hours."
+    },
+    "location": {
+      "title": "Location",
+      "region": "Iraq & Kurdistan region",
+      "cities": "Erbil · Baghdad · Sulaymaniyah"
+    }
+  },
+  "messagesPage": {
+    "emptyTitle": "No messages yet",
+    "emptyDesc": "Find cars and message sellers from listings.",
+    "selectConversation": "Select a conversation",
+    "selectHint": "Choose from the list to start messaging"
+  },
+  "marketplace": {
+    "title": "Buy & Sell Marketplace",
+    "searchPlaceholder": "Search by make, model, or keyword...",
+    "filters": "Filters",
+    "priceRange": "Price Range",
+    "yearRange": "Year Range",
+    "maxMileage": "Max Mileage",
+    "maxMileagePlaceholder": "e.g., 100000",
+    "min": "Min",
+    "max": "Max",
+    "clearAll": "Clear All",
+    "applyFilters": "Apply Filters",
+    "loading": "Loading...",
+    "noListings": "No listings found",
+    "postFirst": "Post your first listing",
+    "showingRange": "Showing {from} to {to} of {total} cars",
+    "postedMinutesAgo": "Posted {n} minutes ago",
+    "postedHoursAgo": "Posted {n} hours ago",
+    "postedDaysAgo": "Posted {n} days ago",
+    "postedMonthsAgo": "Posted {n} months ago",
+    "noImage": "No Image",
+    "pageOf": "Page {page} of {total}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "listing": {
+    "noImageAvailable": "No Image Available",
+    "notFound": "Listing not found",
+    "backToMarketplace": "Back to Marketplace",
+    "loadError": "Failed to load listing",
+    "invalidId": "Invalid listing ID",
+    "mileage": "Mileage",
+    "year": "Year",
+    "transmission": "Transmission",
+    "fuelType": "Fuel Type",
+    "color": "Color",
+    "condition": "Condition",
+    "features": "Features",
+    "description": "Description",
+    "vin": "VIN",
+    "priceHistory": "Price History",
+    "contactSeller": "Contact Seller",
+    "sendMessage": "Send Message",
+    "shareListing": "Share",
+    "reportListing": "Report",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "viewImage": "View image {current} of {total}",
+    "listedOn": "Listed on",
+    "location": "Location",
+    "postedOn": "Posted {date}",
+    "callNow": "Call Now",
+    "contactNotAvailable": "Contact information not available",
+    "safetyTip": "Always meet in public places and verify the vehicle before payment",
+    "sellerNotAvailable": "Seller information not available",
+    "vehicleSold": "This vehicle has been sold"
+  },
+  "sell": {
+    "step1Title": "Step 1: Where is your car located?",
+    "step1Description": "Select your location to help buyers find your listing",
+    "locationRequired": "Location required",
+    "selectLocation": "Please select your location",
+    "country": "Country",
+    "selectCountry": "Select Country",
+    "stateProvince": "State/Province",
+    "selectStateProvince": "Select State/Province",
+    "city": "City",
+    "enterCity": "Enter your city",
+    "selectCity": "Select City",
+    "orSearchLocation": "Or search for location",
+    "searchPlaceholder": "Search by city name...",
+    "autocompleteComingSoon": "Location autocomplete coming soon",
+    "continue": "Continue"
+  },
+  "favorites": {
+    "title": "My Favorites",
+    "subtitle": "Your saved car listings",
+    "sortBy": "Sort by",
+    "recentlySaved": "Recently Saved",
+    "priceLow": "Price: Low to High",
+    "priceHigh": "Price: High to Low",
+    "newestListings": "Newest Listings",
+    "filters": "Filters",
+    "priceRange": "Price Range",
+    "min": "Min",
+    "max": "Max",
+    "location": "Location",
+    "cityOrState": "City or State",
+    "clearFilters": "Clear Filters",
+    "loadingFavorites": "Loading favorites...",
+    "noFavorites": "No favorites yet",
+    "noFavoritesDesc": "You haven't saved any cars yet. Start browsing!",
+    "browseListings": "Browse Listings",
+    "showingXofY": "Showing {count} of {total} saved cars",
+    "savedToday": "Saved today",
+    "savedYesterday": "Saved yesterday",
+    "savedDaysAgo": "Saved {n} days ago",
+    "savedWeeksAgo": "Saved {n} weeks ago",
+    "savedMonthsAgo": "Saved {n} months ago",
+    "noImage": "No Image",
+    "pageOf": "Page {page} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "loadError": "Failed to load favorites"
+  },
+  "home": {
+    "title": "AI-Powered Car Pricing",
+    "description": "Get accurate car price estimates using advanced machine learning. Predict prices for single cars, compare multiple vehicles, or find cars within your budget.",
+    "smartestWay": "The smartest way to value cars in Iraq & Kurdistan.",
+    "heroSubheadline": "AI-powered valuations using live market data from Erbil, Baghdad, and Sulaymaniyah.",
+    "analyzedCount": "55,000+ Cars Analyzed",
+    "trustBarCoverage": "Coverage: All Iraq & Kurdistan (Erbil, Baghdad, Sulaymaniyah, Basra, etc.)",
+    "allIraq": "Covering All Iraq & Kurdistan",
+    "trustBarAccuracy": "95% Prediction Accuracy",
+    "popularBrandsLabel": "Popular brands",
+    "nav": {
+      "predict": "Predict Car Price",
+      "predictSubtitle": "Get an instant AI estimate.",
+      "sellCar": "Sell Car",
+      "compare": "Compare Cars",
+      "budget": "Budget Finder"
+    },
+    "bestDeals": "Best Deals",
+    "viewAll": "View all",
+    "marketPulseTitle": "Market Pulse",
+    "marketPulseText": "SUVs are currently seeing a +2.4% price increase this month in the KRG region.",
+    "trustedBy": "Trusted by",
+    "usersWorldwide": "users worldwide",
+    "features": {
+      "single": {
+        "title": "Single Prediction",
+        "description": "Get instant price predictions for any car"
+      },
+      "batch": {
+        "title": "Batch Processing",
+        "description": "Upload CSV files to predict multiple cars at once"
+      },
+      "compare": {
+        "title": "Compare Cars",
+        "description": "Side-by-side comparison of multiple vehicles"
+      },
+      "accuracy": {
+        "title": "99.96% Accuracy",
+        "description": "Powered by advanced machine learning models"
+      }
+    },
+    "howItWorks": {
+      "title": "How it Works",
+      "subtitle": "Get accurate price predictions in 3 simple steps",
+      "step1": {
+        "title": "Enter Details",
+        "description": "Select your car's make, model, year, and mileage."
+      },
+      "step2": {
+        "title": "AI Analysis",
+        "description": "Our model scans thousands of local listings in real-time."
+      },
+      "step3": {
+        "title": "Get Result",
+        "description": "Receive an instant, fair market valuation you can trust."
+      }
+    },
+    "valueProposition": {
+      "title": "100% FREE Forever",
+      "subtitle": "No hidden fees, no credit card required",
+      "description": "Get unlimited car price predictions completely free. No subscriptions, no tiers, no catch.",
+      "features": {
+        "unlimited": "Unlimited Predictions",
+        "noSignup": "No Signup Required",
+        "noAds": "No Ads",
+        "alwaysFree": "Always Free"
+      }
+    },
+    "socialProof": {
+      "title": "Trusted by Thousands",
+      "subtitle": "See what our users are saying",
+      "testimonial1": {
+        "name": "Ahmed Al-Mansouri",
+        "location": "Baghdad, Iraq",
+        "text": "This tool saved me $3,000 when buying my car. The predictions are incredibly accurate!"
+      },
+      "testimonial2": {
+        "name": "Sara Hassan",
+        "location": "Erbil, Kurdistan",
+        "text": "As a car dealer, I use this daily. It's fast, free, and reliable. Highly recommended!"
+      },
+      "testimonial3": {
+        "name": "Mohammed Ali",
+        "location": "Basra, Iraq",
+        "text": "Finally, a tool that understands the Iraqi car market. The regional pricing is spot-on!"
+      }
+    },
+    "liveActivity": {
+      "title": "Live Activity Feed",
+      "subtitle": "See predictions happening in real-time",
+      "recentPrediction": "just predicted",
+      "ago": "ago"
+    },
+    "regionalIntelligence": {
+      "title": "Regional Intelligence",
+      "subtitle": "Optimized for Iraqi & Kurdish Markets",
+      "description": "Our AI understands local market dynamics, regional pricing variations, and cultural preferences specific to Iraq and Kurdistan.",
+      "features": {
+        "localData": "Local Market Data",
+        "regionalPricing": "Regional Pricing Intelligence",
+        "currencySupport": "Multi-Currency Support",
+        "localMakes": "Popular Local Makes & Models"
+      }
+    },
+    "aiTransparency": {
+      "title": "AI Transparency",
+      "subtitle": "Know exactly how our AI works",
+      "modelInfo": {
+        "version": "Model Version",
+        "dataset": "Training Dataset",
+        "accuracy": "Model Accuracy",
+        "lastUpdate": "Last Update"
+      },
+      "values": {
+        "version": "v2.1.0",
+        "dataset": "60,000+ cars",
+        "accuracy": "99.96% R² Score",
+        "lastUpdate": "Updated weekly"
+      },
+      "description": "We believe in transparency. See exactly what data our AI uses and how accurate it is."
+    },
+    "interactiveDemo": {
+      "title": "Try It Now - No Signup Required",
+      "subtitle": "See how accurate our predictions are",
+      "description": "Enter any car details below and get an instant price prediction. No account needed!",
+      "tryDemo": "Try Demo",
+      "or": "or",
+      "getStarted": "Get Started"
+    },
+    "comparison": {
+      "title": "Why Choose Us?",
+      "subtitle": "Compare with other car price tools",
+      "us": "CarWiseIQ",
+      "others": "Other Tools",
+      "features": {
+        "free": "100% Free",
+        "accuracy": "99.96% Accuracy",
+        "noSignup": "No Signup Required",
+        "batch": "Batch Processing",
+        "compare": "Car Comparison",
+        "api": "API Access",
+        "support": "Local Support"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know",
+      "q1": {
+        "question": "Is this really free?",
+        "answer": "Yes! 100% free forever. No credit card, no subscription, no hidden fees. We believe everyone should have access to accurate car price predictions."
+      },
+      "q2": {
+        "question": "How accurate are the predictions?",
+        "answer": "Our AI model achieves 99.96% accuracy (R² score) with an average error of only $386. This is industry-leading precision powered by advanced machine learning."
+      },
+      "q3": {
+        "question": "Do I need to create an account?",
+        "answer": "No! You can use all features without signing up. However, creating a free account lets you save your predictions and compare cars later."
+      },
+      "q4": {
+        "question": "What data do you use?",
+        "answer": "We train our model on 60,000+ real car listings from the Iraqi and Kurdish markets, ensuring accurate regional pricing predictions."
+      },
+      "q5": {
+        "question": "Can I predict prices for multiple cars?",
+        "answer": "Yes! Use our batch processing feature to upload a CSV file with multiple cars and get predictions for all of them at once."
+      },
+      "q6": {
+        "question": "Is my data secure?",
+        "answer": "Absolutely. We use enterprise-grade encryption and never share your data with third parties. Your privacy is our priority."
+      }
+    },
+    "newsletter": {
+      "title": "Stay Updated",
+      "subtitle": "Get the latest car market insights",
+      "description": "Join our newsletter for weekly market trends, pricing updates, and exclusive tips.",
+      "emailPlaceholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "privacy": "We respect your privacy. Unsubscribe anytime."
+    },
+    "finalCta": {
+      "title": "Ready to Get Accurate Car Prices?",
+      "subtitle": "Join thousands of satisfied users",
+      "description": "Start predicting car prices now - it's free, fast, and requires no signup!",
+      "ctaButton": "Start Predicting Now",
+      "secondaryButton": "Learn More"
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "description": "Start predicting car prices with our AI-powered tool"
+    }
+  },
+  "predict": {
+    "title": "Predict Car Price",
+    "description": "Enter car details to get an AI-powered price prediction",
+    "form": {
+      "basicInfo": "Car Basics",
+      "technicalSpecs": "Car Heart & Specs",
+      "conditionLocation": "Condition & Where",
+      "year": "Year",
+      "mileage": "Mileage (km)",
+      "engineSize": "Engine (L)",
+      "cylinders": "Cylinders",
+      "make": "Make",
+      "model": "Model",
+      "condition": "Condition",
+      "fuelType": "Fuel Type",
+      "location": "Location",
+      "trySample": "Try Sample Car",
+      "clearForm": "Clear",
+      "predictButton": "🚗 Predict Price"
+    },
+    "result": {
+      "title": "Predicted Price",
+      "estimatedValue": "ESTIMATED MARKET VALUE",
+      "confidence": "95% Confidence",
+      "precision": "Precision",
+      "dealAnalysis": "Deal Summary",
+      "marketComparison": "Market Comparison",
+      "marketTrends": "Market Trends",
+      "similarCars": "Similar Cars",
+      "smartTips": "Smart Tips"
+    }
+  },
+  "batch": {
+    "title": "Batch Prediction",
+    "description": "Upload a CSV file with multiple cars to predict prices in bulk",
+    "upload": {
+      "label": "CSV File",
+      "placeholder": "Choose file or drag and drop",
+      "instructions": "CSV should have columns: year, mileage, engine_size, cylinders, make, model, condition, fuel_type, location"
+    },
+    "process": "Process Batch",
+    "results": {
+      "title": "Results",
+      "summary": "Summary",
+      "export": "Export to CSV"
+    }
+  },
+  "compare": {
+    "title": "Compare Cars",
+    "description": "Compare prices for multiple cars side by side",
+    "addCar": "Add Car",
+    "predictAll": "Predict All",
+    "remove": "Remove"
+  },
+  "budget": {
+    "title": "Budget Finder",
+    "description": "Find cars within your budget range",
+    "maxBudget": "Maximum Budget",
+    "filters": "Filters",
+    "minYear": "Minimum Year",
+    "maxMileage": "Maximum Mileage (km)",
+    "preferredMakes": "Preferred Makes",
+    "condition": "Condition",
+    "findCars": "Find Cars",
+    "noResults": "No cars found matching your criteria",
+    "comingSoon": "Coming Soon - Budget finder feature will be available soon",
+    "useThisCar": "Use This Car",
+    "foundCars": "Found {count} cars matching your criteria",
+    "page": "Page",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "reset": "Reset"
+  },
+  "stats": {
+    "title": "Dataset Statistics",
+    "description": "Overview of the car price dataset",
+    "totalCars": "Total Cars",
+    "averagePrice": "Average Price",
+    "medianPrice": "Median Price",
+    "minPrice": "Min Price",
+    "maxPrice": "Max Price",
+    "yearRange": "Year Range",
+    "tabs": {
+      "statistics": "Statistics",
+      "visualizations": "Visualizations"
+    },
+    "priceDistribution": "Price Distribution",
+    "topMakes": "Top Car Makes",
+    "fuelTypeDistribution": "Fuel Type Distribution",
+    "priceTrendsByYear": "Price Trends by Year",
+    "priceByCondition": "Price by Condition",
+    "visualizations": {
+      "title": "Interactive Visualizations",
+      "description": "Interactive visualizations with zoom, pan, and hover tooltips. Click and drag to explore!",
+      "select": "Select Visualization",
+      "warning": "This visualization is large (7.4 MB)",
+      "info": "Large visualizations (>2MB) cannot be displayed inline to prevent browser crashes. Please download the file and open it in your browser for the best experience.",
+      "download": "📥 Download Visualization",
+      "static": "Static Visualizations",
+      "priceDistribution": "Price Distribution"
+    }
+  },
+  "docs": {
+    "title": "API Documentation",
+    "description": "Learn how to use the CarWiseIQ API",
+    "baseUrl": "Base URL",
+    "endpoints": "Endpoints",
+    "examples": "Example Usage",
+    "swagger": "Open Swagger UI"
+  },
+  "sidebar": {
+    "account": {
+      "title": "Account",
+      "info": "Create an account to save cars and comparisons",
+      "login": "Login",
+      "register": "Register"
+    },
+    "appInfo": {
+      "title": "App Information",
+      "description": "CarWiseIQ is an AI-powered tool that estimates car prices using advanced machine learning."
+    },
+    "howToUse": {
+      "title": "How to Use:",
+      "step1": "Fill in car details in the form",
+      "step2": "Click \"Try Sample Car\" to see an example",
+      "step3": "Click \"🚗 Predict Price\" to get your estimate",
+      "step4": "View results with confidence intervals"
+    },
+    "tips": {
+      "title": "Tips:",
+      "tip1": "Use realistic values for accurate predictions",
+      "tip2": "Lower mileage typically increases value",
+      "tip3": "Condition significantly affects price",
+      "tip4": "Location can impact regional pricing"
+    },
+    "language": {
+      "title": "Language / زمان / اللغة"
+    },
+    "recentSearches": {
+      "title": "Recent Searches",
+      "empty": "No recent searches yet. Your prediction history will appear here."
+    },
+    "quickStats": {
+      "title": "Quick Stats",
+      "totalCars": "Total Cars",
+      "averagePrice": "Average Price"
+    },
+    "modelInfo": {
+      "title": "Model Information",
+      "model": "Model",
+      "r2Score": "R² Score"
+    },
+    "trust": {
+      "title": "Trust & Transparency",
+      "modelVersion": "MODEL VERSION",
+      "trainingDataset": "TRAINING DATASET",
+      "modelAccuracy": "MODEL ACCURACY",
+      "lastUpdate": "LAST MODEL UPDATE"
+    },
+    "savedCars": {
+      "title": "Saved Cars",
+      "empty": "No cars saved yet. Save a car after getting a prediction to compare later."
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "reset": "🔄 Reset All Inputs"
+    },
+    "instructions": {
+      "title": "Instructions",
+      "requiredFields": "Required Fields:",
+      "validation": "Validation:",
+      "field1": "Make & Model: Select from dropdown",
+      "field2": "Year: 2000-2025",
+      "field3": "Mileage: 0-500,000 km",
+      "field4": "Engine Size: 0.5-10.0 L",
+      "field5": "Cylinders: 2-12",
+      "field6": "Condition: Select quality level",
+      "field7": "Fuel Type: Choose fuel type",
+      "field8": "Location: Select location",
+      "validation1": "All fields must be valid",
+      "validation2": "Make and model must exist in dataset",
+      "validation3": "Values must be within acceptable ranges"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "loginDescription": "Enter your credentials to access your account",
+    "registerDescription": "Create a new account to save cars and comparisons",
+    "loginSuccess": "Logged in successfully",
+    "registerSuccess": "Account created successfully",
+    "loginError": "Failed to login. Please check your credentials.",
+    "registerError": "Failed to register. Email may already be in use.",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordHint": "Password must be at least 6 characters",
+    "loggingIn": "Logging in...",
+    "registering": "Creating account...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "logoutSuccess": "Logged out successfully",
+    "logoutError": "Failed to logout",
+    "user": "User",
+    "fullNameOptional": "Full Name (Optional)",
+    "fullNamePlaceholder": "Enter your full name",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "resetPasswordDescription": "Enter your new password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmNewPassword": "Confirm Password",
+    "confirmNewPasswordPlaceholder": "Confirm new password",
+    "resetting": "Resetting...",
+    "backToForgotPassword": "Back to Forgot Password",
+    "invalidOrExpiredLink": "Invalid or expired link",
+    "invalidLinkDescription": "This password reset link is invalid or has expired. Request a new one.",
+    "requestNewResetLink": "Request new reset link",
+    "backToLogin": "Back to Login",
+    "resetPasswordError": "Failed to reset password",
+    "termsAcceptPrefix": "I accept the ",
+    "termsOfService": "Terms of Service",
+    "termsAnd": " and ",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "dealAnalysis": {
+    "title": "Deal Analysis",
+    "excellent": "Excellent Deal",
+    "good": "Good Deal",
+    "fair": "Fair Price",
+    "poor": "Poor Deal",
+    "aboveMarket": "above market average",
+    "belowMarket": "below market average",
+    "description": "This price is {status} and competitive. It's {percentage} above the market average for similar cars ({average}). This is a reasonable price point."
+  },
+  "marketComparison": {
+    "title": "Market Comparison",
+    "yourCar": "Your Car",
+    "marketAverage": "Market Average",
+    "difference": "Difference",
+    "aboveAverage": "Above Average",
+    "belowAverage": "Below Average",
+    "wideRange": "Wide Range Explained",
+    "wideRangeDesc": "This prediction has a broader confidence interval, which may indicate less historical data for similar vehicles or higher market variability for this make/model combination."
+  },
+  "marketTrends": {
+    "title": "Market Trends",
+    "decreased": "Prices for {make} {model} have decreased {percent}% in the last 6 months.",
+    "increased": "Prices for {make} {model} have increased {percent}% in the last 6 months.",
+    "declining": "Prices declining, good time to buy!",
+    "rising": "Prices rising, consider buying soon."
+  },
+  "smartTips": {
+    "title": "Smart Tips",
+    "buyingTip": {
+      "title": "💡 General Buying Tip",
+      "content": "Smart buying tip: Always get a pre-purchase inspection from an independent mechanic before finalizing any car purchase.",
+      "why": "Why does this matter?",
+      "reason": "Even with AI price predictions, a professional inspection can reveal:",
+      "point1": "Hidden mechanical issues",
+      "point2": "Previous accident damage",
+      "point3": "Maintenance needs",
+      "point4": "Safety concerns",
+      "cost": "A $100-200 inspection can save you thousands in unexpected repairs."
+    },
+    "export": {
+      "title": "📥 Export & Share Results",
+      "content": "Coming soon: Export your prediction results as PDF or share via email."
+    }
+  },
+  "similarCars": {
+    "title": "Similar Cars - Compare with Market Data",
+    "year": "Year",
+    "mileage": "Mileage (km)",
+    "condition": "Condition",
+    "price": "Price ($)"
+  },
+  "feedback": {
+    "title": "How accurate was this prediction?",
+    "description": "Your feedback helps us improve our AI model",
+    "aiConfidence": "AI Confidence",
+    "starRating": "Rate this prediction",
+    "accurate": "Accurate",
+    "notAccurate": "Not Accurate",
+    "thankYou": "Thank you for your feedback!",
+    "detailed": {
+      "title": "Help us improve! What was wrong?",
+      "description": "Please provide details about what was incorrect",
+      "whatWasWrong": "What was wrong?",
+      "whatShouldItHaveBeen": "What should it have been?",
+      "whatShouldItHaveBeenDesc": "Please provide the correct make and model to help us improve our predictions.",
+      "correctInfo": "Correct Information",
+      "correctMake": "Correct Make",
+      "correctModel": "Correct Model",
+      "correctYear": "Correct Year",
+      "correctPrice": "Correct Price",
+      "otherDetails": "Other Details",
+      "otherDetailsHint": "50-500 characters",
+      "otherDetailsPlaceholder": "Please describe what was wrong...",
+      "characters": "characters",
+      "cancel": "Cancel",
+      "submit": "Submit Feedback",
+      "reasons": {
+        "wrong_make": "Wrong make detected",
+        "wrong_model": "Wrong model detected",
+        "wrong_year": "Wrong year/year range",
+        "price_too_high": "Price estimate too high",
+        "price_too_low": "Price estimate too low",
+        "missing_features": "Missing important features",
+        "other": "Other (please specify)"
+      },
+      "errors": {
+        "selectReason": "Please select at least one reason",
+        "otherDetailsMin": "Please provide at least 50 characters",
+        "otherDetailsMax": "Maximum 500 characters allowed",
+        "correctMakeRequired": "Please provide the correct make",
+        "correctModelRequired": "Please provide the correct model"
+      }
+    },
+    "history": {
+      "title": "Prediction History",
+      "description": "View and update feedback on your past predictions",
+      "noHistory": "No prediction history yet",
+      "noHistoryDesc": "Your past predictions will appear here",
+      "updateFeedback": "Update Feedback",
+      "viewDetails": "View Details",
+      "predictedOn": "Predicted on",
+      "rating": "Rating",
+      "feedback": "Feedback"
+    },
+    "metrics": {
+      "title": "AI Improvement Metrics",
+      "overallAccuracy": "Overall Accuracy",
+      "avgRating": "Average Rating",
+      "totalFeedback": "Total Feedback",
+      "improvement": "Our AI has improved {percent}% this month thanks to feedback from users like you!",
+      "byMake": "Accuracy by Make",
+      "trend": "Improvement Trend"
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: 20 January 2026",
+    "intro": "CarWise (\"we\", \"our\", or \"the service\") is a car price prediction and car-related platform operating only in Iraq and the Kurdistan Region. This Privacy Policy explains how we collect, use, and protect your information when you use CarWise.",
+    "sections": {
+      "informationWeCollect": {
+        "title": "Information We Collect"
+      },
+      "informationYouProvide": {
+        "title": "Information You Provide",
+        "items": "Car photos uploaded for price prediction or listings|Saved predictions, favorites, and history (only if you choose to create an account)",
+        "footer": "You can use CarWise without logging in. Login is required only to save predictions, history, and favorites."
+      },
+      "informationCollectedAutomatically": {
+        "title": "Information Collected Automatically",
+        "items": "IP address|Device information (browser type, operating system)|Basic usage data (pages visited, actions taken)"
+      },
+      "howWeUseInfo": {
+        "title": "How We Use Your Information",
+        "description": "We use the collected information to:",
+        "items": "Provide accurate car price predictions|Improve our services, performance, and user experience|Save user preferences, history, and favorites (for logged-in users)|Monitor usage and analyze trends|Detect, prevent, and fix technical or security issues"
+      },
+      "cookies": {
+        "title": "Cookies & Tracking Technologies",
+        "description": "CarWise uses cookies and similar technologies for the following purposes:",
+        "items": "Essential cookies – required for the website to function correctly|Analytics cookies – to understand how users interact with the platform|Marketing cookies – to show relevant promotions or advertisements",
+        "footer": "You can control or disable cookies through your browser settings."
+      },
+      "informationSharing": {
+        "title": "Information Sharing",
+        "description": "We do not sell, trade, or rent your personal information. We may share limited information only when:",
+        "items": "Required by law or legal authorities|Necessary to protect the rights, safety, or security of CarWise and its users|Using trusted analytics or infrastructure services to operate and improve the platform"
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "content": "We use appropriate technical and organizational measures to protect your information against unauthorized access, loss, misuse, or disclosure.\n\nHowever, no online service can be guaranteed to be 100% secure."
+      },
+      "dataRetention": {
+        "title": "Data Retention",
+        "items": "Personal and usage data are retained only as long as necessary to provide our services|If you delete your account, saved data will be deleted or anonymized unless legal retention is required"
+      },
+      "childrenAndAgeUse": {
+        "title": "Children & Age Use",
+        "content": "CarWise is available to users of all ages. We do not knowingly collect sensitive personal information from children.\n\nWe encourage parents or guardians to supervise children's use of the service when applicable."
+      },
+      "yourRights": {
+        "title": "Your Rights",
+        "description": "You have the right to:",
+        "items": "Access your stored information|Request correction or deletion of your data|Control cookie preferences through your browser",
+        "footer": "Requests can be made by contacting us directly."
+      },
+      "changesToPolicy": {
+        "title": "Changes to This Privacy Policy",
+        "content": "We may update this Privacy Policy from time to time.\n\nAny changes will be posted on this page with an updated \"Last updated\" date."
+      },
+      "contactUs": {
+        "title": "Contact Us",
+        "description": "If you have any questions about this Privacy Policy, please contact us:",
+        "items": "Email: carwise15@gmail.com|Phone: 0777 447 2106|Phone: 0770 450 1030"
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: 20 January 2026",
+    "intro": "Welcome to CarWise. These Terms of Service (\"Terms\") govern your access to and use of the CarWise website, application, and services (collectively, the \"Service\"). By accessing or using CarWise, you agree to be bound by these Terms.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "content": "By using CarWise, you confirm that you have read, understood, and agree to these Terms.\n\nIf you do not agree, you must not use the Service."
+      },
+      "descriptionOfService": {
+        "title": "2. Description of the Service",
+        "description": "CarWise is a car-related platform that provides:",
+        "items": "Car price predictions (estimates only)|Saving predictions, favorites, and history|Car listings and related features|User interactions and content uploads",
+        "footer": "The Service is free to use. Paid features may be introduced in the future, and users will be informed in advance."
+      },
+      "eligibility": {
+        "title": "3. Eligibility",
+        "content": "CarWise is available to users of all ages.\n\nUsers are responsible for ensuring that their use of the Service complies with applicable local laws."
+      },
+      "accountRegistration": {
+        "title": "4. Account Registration",
+        "items": "You may use some features without creating an account.|An account is required to save predictions, favorites, history, or post content.|You are responsible for maintaining the confidentiality of your account credentials.|You may delete your account at any time.",
+        "footer": "CarWise reserves the right to suspend or terminate accounts that violate these Terms."
+      },
+      "pricePredictionsDisclaimer": {
+        "title": "5. Price Predictions Disclaimer",
+        "content": "All car prices provided by CarWise are estimates only. They are generated using algorithms and market data and do not guarantee actual market value.\n\nCarWise is not responsible for financial decisions, losses, or transactions made based on these predictions."
+      },
+      "userContent": {
+        "title": "6. User Content",
+        "description": "Users may upload:",
+        "items": "Car photos|Descriptions, notes, and other related content",
+        "footer": "You retain ownership of your content. By posting content, you grant CarWise a non-exclusive, worldwide, royalty-free license to use, display, and distribute the content for operating and improving the Service.\n\nCarWise may remove any content that violates these Terms or applicable laws."
+      },
+      "prohibitedUses": {
+        "title": "7. Prohibited Uses",
+        "description": "You agree not to:",
+        "items": "Violate any applicable law or regulation|Upload illegal, harmful, or misleading content|Use automated systems, scraping, or bots|Transmit malware, viruses, or malicious code|Impersonate another person or entity|Abuse, disrupt, or overload the Service"
+      },
+      "termination": {
+        "title": "8. Termination",
+        "description": "CarWise may suspend or terminate your access at any time if:",
+        "items": "You violate these Terms|Your actions harm the Service or other users",
+        "footer": "You may stop using the Service and delete your account at any time."
+      },
+      "intellectualProperty": {
+        "title": "9. Intellectual Property",
+        "content": "All content, branding, and software related to CarWise (excluding user content) are the property of CarWise.\n\nThey may not be copied, modified, or distributed without permission."
+      },
+      "disclaimerOfWarranties": {
+        "title": "10. Disclaimer of Warranties",
+        "content": "The Service is provided \"as is\" and \"as available\". CarWise makes no warranties regarding accuracy, reliability, or availability of the Service."
+      },
+      "limitationOfLiability": {
+        "title": "11. Limitation of Liability",
+        "content": "To the maximum extent permitted by law, CarWise shall not be liable for any indirect, incidental, or consequential damages.\n\nThis includes financial losses arising from the use of the Service."
+      },
+      "governingLaw": {
+        "title": "12. Governing Law",
+        "content": "These Terms shall be governed by and interpreted in accordance with the laws of Iraq and the Kurdistan Region."
+      },
+      "changesToTerms": {
+        "title": "13. Changes to These Terms",
+        "content": "CarWise may update these Terms from time to time.\n\nContinued use of the Service after changes means you accept the updated Terms."
+      },
+      "contactInformation": {
+        "title": "14. Contact Information",
+        "description": "If you have any questions about these Terms, contact us at:",
+        "items": "Email: carwise15@gmail.com|Phone: 0777 447 2106|Phone: 0770 450 1030"
+      }
+    }
+  }
+}
+
