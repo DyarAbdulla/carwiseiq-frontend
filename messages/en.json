@@ -679,7 +679,13 @@
       "q1": "Question 1?",
       "a1": "Answer 1",
       "q2": "Question 2?",
-      "a2": "Answer 2"
+      "a2": "Answer 2",
+      "q3": "Question 3?",
+      "a3": "Answer 3",
+      "q4": "Question 4?",
+      "a4": "Answer 4",
+      "q5": "Question 5?",
+      "a5": "Answer 5"
     },
     "hours": {
       "title": "Support Hours",

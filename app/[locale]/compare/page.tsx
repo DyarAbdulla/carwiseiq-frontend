@@ -43,7 +43,7 @@ interface ListingCard {
   description?: string
 }
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams()
   const listingIds = searchParams?.get('ids')?.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) || []
   const isMarketplaceComparison = listingIds.length > 0
@@ -1454,5 +1454,19 @@ export default function ComparePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400">Loading compare page...</p>
+        </div>
+      </div>
+    }>
+      <ComparePageContent />
+    </Suspense>
   )
 }

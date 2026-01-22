@@ -1,6 +1,7 @@
 "use client"
 
 import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 import { useLocale } from 'next-intl'
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, Share2, Eye, Plus } from 'lucide-react'
 
-export default function SellSuccessPage() {
+function SellSuccessPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const locale = useLocale()
@@ -68,5 +69,19 @@ export default function SellSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function SellSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SellSuccessPageContent />
+    </Suspense>
   )
 }
