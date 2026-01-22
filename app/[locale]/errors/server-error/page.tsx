@@ -1,5 +1,7 @@
 "use client"
 
+
+export const runtime = 'edge';
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'

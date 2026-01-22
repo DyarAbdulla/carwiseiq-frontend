@@ -1,5 +1,7 @@
 "use client"
 
+
+export const runtime = 'edge';
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

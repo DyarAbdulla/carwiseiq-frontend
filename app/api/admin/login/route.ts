@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminToken, COOKIE_NAME, MAX_AGE } from "@/lib/admin-auth"
 
+export const runtime = 'edge';
+
 // Change password: update ADMIN_PASSWORD below (and optionally ADMIN_EMAIL).
 const ADMIN_EMAIL = "admin@carprice.com"
 const ADMIN_PASSWORD = "admin123"

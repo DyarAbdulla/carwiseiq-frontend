@@ -12,6 +12,8 @@ import { SkipToContent } from '@/components/common/SkipToContent';
 import { SetDirection } from '@/components/common/SetDirection';
 import React from 'react';
 
+export const runtime = 'edge';
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }

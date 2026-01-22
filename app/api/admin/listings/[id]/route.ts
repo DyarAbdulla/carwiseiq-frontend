@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin-auth"
 
+export const runtime = 'edge';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 /** ADMIN_API_SECRET or ADMIN_SECRET from env; in NODE_ENV=development with neither set, use dev-admin-secret. */
