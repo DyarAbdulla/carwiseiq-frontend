@@ -545,5 +545,86 @@
     "terms": "شروط الخدمة",
     "copyright": "متنبئ بأسعار السيارات برو. جميع الحقوق محفوظة.",
     "poweredBy": "مدعوم بالتعلم الآلي المتقدم"
+  },
+  "feedback": {
+    "history": {
+      "title": "سجل التنبؤات",
+      "description": "عرض وتحديث التعليقات على تنبؤاتك السابقة",
+      "noHistory": "لا يوجد سجل تنبؤات بعد",
+      "noHistoryDesc": "ستظهر تنبؤاتك السابقة هنا",
+      "updateFeedback": "تحديث التعليقات",
+      "viewDetails": "عرض التفاصيل",
+      "predictedOn": "تم التنبؤ في",
+      "rating": "التقييم",
+      "feedback": "التعليقات"
+    }
+  },
+  "support": {
+    "title": "الدعم",
+    "subtitle": "احصل على المساعدة واتصل بنا",
+    "searchPlaceholder": "ابحث عن المساعدة...",
+    "liveChat": {
+      "title": "الدردشة المباشرة",
+      "description": "تحدث معنا فوراً",
+      "button": "بدء الدردشة"
+    },
+    "emailSupport": {
+      "title": "دعم البريد الإلكتروني",
+      "sendLink": "إرسال بريد إلكتروني"
+    },
+    "whatsappSupport": {
+      "title": "واتساب",
+      "description": "راسلنا على واتساب"
+    },
+    "phoneSupport": {
+      "title": "دعم الهاتف",
+      "description": "اتصل بنا مباشرة"
+    },
+    "contactForm": {
+      "title": "اتصل بنا",
+      "subtitle": "أرسل لنا رسالة",
+      "successTitle": "تم إرسال الرسالة!",
+      "successMessage": "سنتواصل معك قريباً.",
+      "sendAnother": "إرسال رسالة أخرى",
+      "name": "الاسم",
+      "namePlaceholder": "اسمك",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "your@email.com",
+      "phone": "الهاتف",
+      "phonePlaceholder": "رقم هاتفك",
+      "subject": "الموضوع",
+      "subjectPlaceholder": "اختر موضوعاً",
+      "message": "الرسالة",
+      "messagePlaceholder": "رسالتك...",
+      "sending": "جاري الإرسال...",
+      "submit": "إرسال الرسالة"
+    },
+    "subjectOptions": {
+      "generalInquiry": "استفسار عام",
+      "pricePrediction": "تنبؤ السعر",
+      "sellingCar": "بيع سيارة",
+      "buyingCar": "شراء سيارة",
+      "technicalIssue": "مشكلة تقنية",
+      "partnership": "شراكة",
+      "other": "أخرى"
+    },
+    "faq": {
+      "title": "الأسئلة الشائعة",
+      "subtitle": "ابحث عن إجابات للأسئلة الشائعة",
+      "q1": "السؤال 1؟",
+      "a1": "الإجابة 1",
+      "q2": "السؤال 2؟",
+      "a2": "الإجابة 2"
+    },
+    "hours": {
+      "title": "ساعات الدعم",
+      "schedule": "الاثنين - الجمعة: 9 صباحاً - 5 مساءً",
+      "note": "نرد على رسائل البريد الإلكتروني خلال 24 ساعة"
+    },
+    "location": {
+      "title": "الموقع",
+      "region": "العراق وكردستان",
+      "cities": "بغداد، أربيل، السليمانية"
+    }
   }
 }

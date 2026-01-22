@@ -545,5 +545,86 @@
     "terms": "مەرجەکانی خزمەتگوزاری",
     "copyright": "پێشبینیکەری نرخی ئۆتۆمبێل پرۆ. هەموو مافەکان پارێزراون.",
     "poweredBy": "بە هێزی فێربوونی ماشین پێشکەوتوو"
+  },
+  "feedback": {
+    "history": {
+      "title": "مێژووی پێشبینی",
+      "description": "بینینی و نوێکردنەوەی فیدباک لەسەر پێشبینییەکانی پێشووت",
+      "noHistory": "هێشتا مێژووی پێشبینی نییە",
+      "noHistoryDesc": "پێشبینییەکانی پێشووت لێرە دەرکەوێت",
+      "updateFeedback": "نوێکردنەوەی فیدباک",
+      "viewDetails": "بینینی وردەکارییەکان",
+      "predictedOn": "پێشبینی کرا لە",
+      "rating": "نمرە",
+      "feedback": "فیدباک"
+    }
+  },
+  "support": {
+    "title": "پشتگیری",
+    "subtitle": "یارمەتی وەربگرە و پەیوەندی بە ئێمەوە بکە",
+    "searchPlaceholder": "گەڕان بۆ یارمەتی...",
+    "liveChat": {
+      "title": "چاتێکی ڕاستەوخۆ",
+      "description": "یەکسەر لەگەڵمان قسە بکە",
+      "button": "دەستپێکردنی چات"
+    },
+    "emailSupport": {
+      "title": "پشتگیری ئیمەیڵ",
+      "sendLink": "ناردنی ئیمەیڵ"
+    },
+    "whatsappSupport": {
+      "title": "واتساپ",
+      "description": "لە واتساپدا نامەمان بنێرە"
+    },
+    "phoneSupport": {
+      "title": "پشتگیری تەلەفۆن",
+      "description": "یەکسەر پەیوەندی بە ئێمەوە بکە"
+    },
+    "contactForm": {
+      "title": "پەیوەندی بە ئێمەوە بکە",
+      "subtitle": "نامەیەکمان بنێرە",
+      "successTitle": "نامەکە نێردرا!",
+      "successMessage": "بەزووان پێت دەگەڕێینەوە.",
+      "sendAnother": "نامەیەکی تر بنێرە",
+      "name": "ناو",
+      "namePlaceholder": "ناوەکەت",
+      "email": "ئیمەیڵ",
+      "emailPlaceholder": "your@email.com",
+      "phone": "تەلەفۆن",
+      "phonePlaceholder": "ژمارەی تەلەفۆنەکەت",
+      "subject": "بابەت",
+      "subjectPlaceholder": "بابەتێک هەڵبژێرە",
+      "message": "نامە",
+      "messagePlaceholder": "نامەکەت...",
+      "sending": "ناردن...",
+      "submit": "ناردنی نامە"
+    },
+    "subjectOptions": {
+      "generalInquiry": "پرسیاری گشتی",
+      "pricePrediction": "پێشبینی نرخ",
+      "sellingCar": "فرۆشتی ئۆتۆمبێل",
+      "buyingCar": "کڕینی ئۆتۆمبێل",
+      "technicalIssue": "کێشەی تەکنیکی",
+      "partnership": "هاوبەشی",
+      "other": "ئەوی تر"
+    },
+    "faq": {
+      "title": "پرسیارە باوەکان",
+      "subtitle": "وەڵامی پرسیارە باوەکان بدۆزەوە",
+      "q1": "پرسیار 1؟",
+      "a1": "وەڵام 1",
+      "q2": "پرسیار 2؟",
+      "a2": "وەڵام 2"
+    },
+    "hours": {
+      "title": "کاتەکانی پشتگیری",
+      "schedule": "دووشەممە - هەینی: 9 بەیانی - 5 ئێوارە",
+      "note": "لە 24 کاتژمێردا وەڵامی ئیمەیڵەکان دەدەینەوە"
+    },
+    "location": {
+      "title": "شوێن",
+      "region": "عێراق و کوردستان",
+      "cities": "بەغدا، هەولێر، سلێمانی"
+    }
   }
 }

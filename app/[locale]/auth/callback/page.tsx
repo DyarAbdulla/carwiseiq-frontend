@@ -1,13 +1,15 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 const RECOVERY_TYPES = ['recovery', 'reset_password']
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter()
   const pathname = usePathname() || ''
   const searchParams = useSearchParams()
@@ -90,5 +92,18 @@ export default function AuthCallbackPage() {
         </>
       )}
     </div>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[calc(100vh-200px)] flex-col items-center justify-center gap-4 p-6 bg-[#0f1117]">
+        <Loader2 className="h-12 w-12 text-[#5B7FFF] animate-spin" />
+        <p className="text-[#94a3b8]">Loading...</p>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }

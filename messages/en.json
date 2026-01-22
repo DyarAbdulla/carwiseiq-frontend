@@ -623,6 +623,74 @@
       "byMake": "Accuracy by Make",
       "trend": "Improvement Trend"
     }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Get help and contact us",
+    "searchPlaceholder": "Search for help...",
+    "liveChat": {
+      "title": "Live Chat",
+      "description": "Chat with us instantly",
+      "button": "Start Chat"
+    },
+    "emailSupport": {
+      "title": "Email Support",
+      "sendLink": "Send Email"
+    },
+    "whatsappSupport": {
+      "title": "WhatsApp",
+      "description": "Message us on WhatsApp"
+    },
+    "phoneSupport": {
+      "title": "Phone Support",
+      "description": "Call us directly"
+    },
+    "contactForm": {
+      "title": "Contact Us",
+      "subtitle": "Send us a message",
+      "successTitle": "Message Sent!",
+      "successMessage": "We'll get back to you soon.",
+      "sendAnother": "Send Another Message",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "phone": "Phone",
+      "phonePlaceholder": "Your phone number",
+      "subject": "Subject",
+      "subjectPlaceholder": "Select a subject",
+      "message": "Message",
+      "messagePlaceholder": "Your message...",
+      "sending": "Sending...",
+      "submit": "Send Message"
+    },
+    "subjectOptions": {
+      "generalInquiry": "General Inquiry",
+      "pricePrediction": "Price Prediction",
+      "sellingCar": "Selling Car",
+      "buyingCar": "Buying Car",
+      "technicalIssue": "Technical Issue",
+      "partnership": "Partnership",
+      "other": "Other"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to common questions",
+      "q1": "Question 1?",
+      "a1": "Answer 1",
+      "q2": "Question 2?",
+      "a2": "Answer 2"
+    },
+    "hours": {
+      "title": "Support Hours",
+      "schedule": "Monday - Friday: 9 AM - 5 PM",
+      "note": "We respond to emails within 24 hours"
+    },
+    "location": {
+      "title": "Location",
+      "region": "Iraq & Kurdistan",
+      "cities": "Baghdad, Erbil, Sulaymaniyah"
+    }
   }
 }
 

@@ -219,7 +219,7 @@ authApi.interceptors.response.use(
 
       // Try to refresh token
       const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
-      
+
       if (refreshToken) {
         try {
           // Call refresh endpoint directly to avoid circular dependency
@@ -227,15 +227,15 @@ authApi.interceptors.response.use(
             refresh_token: refreshToken
           })
           const newToken = response.data.access_token
-          
+
           if (newToken) {
             setToken(newToken)
             authApi.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
             originalRequest.headers.Authorization = `Bearer ${newToken}`
-            
+
             processQueue(null, newToken)
             isRefreshing = false
-            
+
             // Retry original request
             return authApi(originalRequest)
           }
@@ -243,13 +243,13 @@ authApi.interceptors.response.use(
           // Refresh failed, clear tokens and redirect to login
           processQueue(refreshError, null)
           isRefreshing = false
-          
+
           removeToken()
           if (typeof window !== 'undefined') {
             localStorage.removeItem('refresh_token')
           }
           delete authApi.defaults.headers.common['Authorization']
-          
+
           // Redirect to login if not already on login/register page
           if (typeof window !== 'undefined') {
             const pathname = window.location.pathname
@@ -772,7 +772,7 @@ export const apiClient = {
         throw new Error('You must accept the Terms of Service')
       }
 
-      const response = await authApi.post<{ 
+      const response = await authApi.post<{
         access_token: string
         refresh_token?: string
         user: { id: number; email: string; full_name?: string; email_verified: boolean }
@@ -826,7 +826,7 @@ export const apiClient = {
         throw new Error('Email and password are required')
       }
 
-      const response = await authApi.post<{ 
+      const response = await authApi.post<{
         access_token: string
         refresh_token?: string
         user: { id: number; email: string; full_name?: string; email_verified: boolean }
@@ -1415,7 +1415,7 @@ export const apiClient = {
 
   async adminLogout(): Promise<void> {
     try {
-      await authApi.post('/api/admin/logout').catch(() => {})
+      await authApi.post('/api/admin/logout').catch(() => { })
     } finally {
       localStorage.removeItem('admin_token')
       delete authApi.defaults.headers.common['Authorization']

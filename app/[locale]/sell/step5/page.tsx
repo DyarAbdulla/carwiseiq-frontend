@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -20,8 +22,21 @@ export default function SellStep5Page() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const [showPhoneOnly, setShowPhoneOnly] = useState(true)
   const [preferredMethods, setPreferredMethods] = useState<string[]>([])
+  const [location, setLocation] = useState<{ city?: string; state?: string; country?: string }>({})
 
-  const location = JSON.parse(sessionStorage.getItem('sell_location') || '{}')
+  // Load location from sessionStorage on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('sell_location')
+        if (stored) {
+          setLocation(JSON.parse(stored))
+        }
+      } catch (e) {
+        console.error('Error loading location from sessionStorage:', e)
+      }
+    }
+  }, [])
 
   const toggleMethod = (method: string) => {
     setPreferredMethods(prev =>
@@ -33,7 +48,9 @@ export default function SellStep5Page() {
 
   const onSubmit = async (data: any) => {
     const contact = { ...data, show_phone_to_buyers_only: showPhoneOnly, preferred_contact_methods: preferredMethods }
-    sessionStorage.setItem('sell_contact', JSON.stringify(contact))
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sell_contact', JSON.stringify(contact))
+    }
     if (listingId) {
       try {
         await apiClient.updateDraftListing(listingId, {

@@ -1,6 +1,8 @@
 "use client"
 
 import { useSearchParams, useRouter } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 import { useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
