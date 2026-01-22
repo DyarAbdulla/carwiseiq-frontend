@@ -6,7 +6,7 @@ export const runtime = 'edge';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 export async function GET(request: NextRequest) {
-  const session = getAdminSession(request)
+  const session = await getAdminSession(request)
   if (!session) {
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 })
   }

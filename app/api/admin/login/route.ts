@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const token = createAdminToken({ email })
+    const token = await createAdminToken({ email })
     const isProd = process.env.NODE_ENV === "production"
     const res = NextResponse.json({
       access_token: token,

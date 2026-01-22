@@ -6,7 +6,7 @@ export const runtime = 'edge';
 const ADMIN_EMAIL = "admin@carprice.com"
 
 export async function GET(request: NextRequest) {
-  const session = getAdminSession(request)
+  const session = await getAdminSession(request)
   if (!session) {
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 })
   }

@@ -124,7 +124,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = getAdminSession(request)
+    const session = await getAdminSession(request)
     if (!session) {
       return NextResponse.json(
         { detail: "Unauthorized - Admin access required" },
